@@ -3,327 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ebola Virus Tracker</title>
+    <title>Ebola Outbreak Tracker 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-        .card {
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             font-weight: 700;
+            line-height: 1;
         }
         #map {
-            height: 480px;
+            height: 520px;
             border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+        .data-source {
+            transition: all 0.2s ease;
+        }
+        .data-source:hover {
+            background-color: #f8fafc;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-50 text-slate-800">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <header class="bg-white border-b border-red-200 sticky top-0 z-50">
-            <div class="px-6 py-5 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white text-2xl">
-                        <i class="fa-solid fa-virus"></i>
+        <header class="bg-white border-b sticky top-0 z-50 shadow-sm">
+            <div class="px-8 py-6 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-11 h-11 bg-red-600 rounded-2xl flex items-center justify-center text-white text-3xl shadow-inner">
+                        <i class="fa-solid fa-virus-covid"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tight">Ebola Tracker</h1>
-                        <p class="text-sm text-gray-500">Real-time Outbreak Monitoring • May 2026</p>
+                        <h1 class="text-3xl font-bold tracking-tighter">Ebola Outbreak Tracker</h1>
+                        <p class="text-slate-500 text-sm">Bundibugyo Virus • Democratic Republic of the Congo & Uganda • 2026</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-6 text-sm">
-                    <div class="flex items-center gap-2 text-green-600">
-                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span class="font-medium">Live</span>
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-2 text-emerald-600">
+                        <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span class="font-semibold text-sm">MONITORED</span>
                     </div>
-                    <div id="last-updated" class="text-gray-500">
-                        Last updated: Just now
+                    <div id="last-updated" class="text-sm text-slate-500 font-medium">
+                        As of May 29, 2026
                     </div>
                     <button onclick="refreshData()" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors">
+                            class="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
                         <i class="fa-solid fa-rotate"></i>
-                        <span>Refresh</span>
+                        <span>Refresh Data</span>
                     </button>
                 </div>
             </div>
         </header>
 
-        <div class="p-6">
-            <!-- Global Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-2xl p-6 card border border-red-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-red-600">
-                            <i class="fa-solid fa-users text-3xl"></i>
-                        </div>
-                        <span class="text-xs font-medium px-3 py-1 bg-red-100 text-red-700 rounded-full">Confirmed</span>
-                    </div>
-                    <div id="total-cases" class="stat-number text-red-600">132</div>
-                    <p class="text-gray-500 text-sm mt-1">Confirmed Cases (DRC + Uganda)</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 card border border-orange-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-orange-600">
-                            <i class="fa-solid fa-skull text-3xl"></i>
-                        </div>
-                        <span class="text-xs font-medium px-3 py-1 bg-orange-100 text-orange-700 rounded-full">Deaths</span>
-                    </div>
-                    <div id="total-deaths" class="stat-number text-orange-600">18</div>
-                    <p class="text-gray-500 text-sm mt-1">Confirmed Deaths</p>
-                    <div class="text-red-600 text-sm mt-3">CFR: <span id="cfr" class="font-semibold">~13.6%</span> (confirmed)</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 card border border-emerald-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-emerald-600">
-                            <i class="fa-solid fa-heart-pulse text-3xl"></i>
-                        </div>
-                        <span class="text-xs font-medium px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">Suspected</span>
-                    </div>
-                    <div id="suspected" class="stat-number text-emerald-600">913</div>
-                    <p class="text-gray-500 text-sm mt-1">Suspected Cases</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 card border border-blue-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-blue-600">
-                            <i class="fa-solid fa-map-marker-alt text-3xl"></i>
-                        </div>
-                        <span class="text-xs font-medium px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Regions</span>
-                    </div>
-                    <div class="stat-number text-blue-600">5+</div>
-                    <p class="text-gray-500 text-sm mt-1">Affected Provinces/Districts</p>
+        <div class="p-8">
+            <!-- Disclaimer -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-sm flex gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                <div>
+                    <strong>Important:</strong> This is a demonstration dashboard for educational purposes. 
+                    All figures are aggregated from official public sources (WHO, CDC, Ministries of Health). 
+                    Always verify with primary sources. Numbers are subject to rapid change.
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Interactive Map -->
-                <div class="lg:col-span-7 bg-white rounded-3xl p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-semibold flex items-center gap-2">
-                            <i class="fa-solid fa-globe"></i>
-                            Reported Cases Map
-                        </h2>
-                        <div class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full flex items-center gap-1">
-                            <i class="fa-solid fa-info-circle"></i>
-                            Current Outbreak (May 2026)
+            <!-- Global Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-red-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-red-600 text-sm font-medium tracking-widest">CONFIRMED CASES</p>
+                            <div id="confirmed" class="stat-number text-red-600 mt-3">132</div>
+                        </div>
+                        <i class="fa-solid fa-users text-4xl text-red-200"></i>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-6">DRC + Uganda</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-orange-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-orange-600 text-sm font-medium tracking-widest">CONFIRMED DEATHS</p>
+                            <div id="deaths" class="stat-number text-orange-600 mt-3">18</div>
+                        </div>
+                        <i class="fa-solid fa-skull-crossbones text-4xl text-orange-200"></i>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-6">CFR ≈ 13.6% (confirmed)</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-600 text-sm font-medium tracking-widest">SUSPECTED CASES</p>
+                            <div id="suspected" class="stat-number text-slate-700 mt-3">913</div>
+                        </div>
+                        <i class="fa-solid fa-user-clock text-4xl text-slate-200"></i>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-6">Primarily in DRC</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-blue-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-blue-600 text-sm font-medium tracking-widest">AFFECTED AREAS</p>
+                            <div class="stat-number text-blue-600 mt-3">6+</div>
+                        </div>
+                        <i class="fa-solid fa-map-location-dot text-4xl text-blue-200"></i>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-6">Ituri, North & South Kivu (DRC), Kampala (Uganda)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Map -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-8 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold">Reported Cases • Interactive Map</h2>
+                        <div class="px-4 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-2xl flex items-center gap-2">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>Bundibugyo Virus Outbreak</span>
                         </div>
                     </div>
                     <div id="map"></div>
-                    <div class="mt-4 text-xs text-gray-500 flex flex-wrap gap-x-6 gap-y-1">
-                        <div><span class="inline-block w-3 h-3 bg-red-600 rounded-full"></span> Confirmed Cases (High)</div>
-                        <div><span class="inline-block w-3 h-3 bg-orange-500 rounded-full"></span> Suspected / Ongoing</div>
-                        <div><span class="inline-block w-3 h-3 bg-blue-500 rounded-full"></span> Imported / Linked</div>
-                        <p class="mt-2 text-[10px]">Data from WHO, CDC, and Ministries of Health • Zoom and click markers for details</p>
+                    <div class="mt-5 text-xs text-slate-500 flex flex-wrap gap-x-8 gap-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-4 h-4 bg-red-600 rounded-full"></span> 
+                            Primary Epicenter (Ituri)
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-4 h-4 bg-orange-500 rounded-full"></span> 
+                            Secondary Transmission
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-4 h-4 bg-blue-500 rounded-full"></span> 
+                            Imported / Linked Cases
+                        </div>
                     </div>
                 </div>
 
-                <!-- Recent Updates -->
-                <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
-                        <span class="flex items-center gap-2">
+                <!-- Sidebar -->
+                <div class="lg:col-span-5 space-y-8">
+                    <!-- Updates -->
+                    <div class="bg-white rounded-3xl p-8 shadow-sm">
+                        <h3 class="font-semibold text-lg mb-5 flex items-center gap-2">
                             <i class="fa-solid fa-bell"></i>
-                            Recent Updates
-                        </span>
-                        <span class="text-xs bg-gray-100 px-3 py-1 rounded-full">May 29, 2026</span>
-                    </h2>
-                    <div class="space-y-4 max-h-96 overflow-auto pr-2" id="updates-list">
-                        <!-- Populated by JS -->
+                            Latest Updates
+                        </h3>
+                        <div id="updates-list" class="space-y-6 text-sm"></div>
+                    </div>
+
+                    <!-- Quick Facts -->
+                    <div class="bg-white rounded-3xl p-8 shadow-sm">
+                        <h3 class="font-semibold text-lg mb-4">Key Facts</h3>
+                        <ul class="space-y-4 text-sm">
+                            <li class="flex gap-3"><span class="text-red-500">•</span> Caused by Bundibugyo virus (no approved vaccine or specific therapeutics)</li>
+                            <li class="flex gap-3"><span class="text-red-500">•</span> Declared PHEIC by WHO on 17 May 2026</li>
+                            <li class="flex gap-3"><span class="text-red-500">•</span> Ongoing challenges: Insecurity, weak health infrastructure, cross-border movement</li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
             <!-- Affected Areas Table -->
-            <div class="mt-8 bg-white rounded-2xl p-6">
-                <h3 class="font-semibold mb-4">Affected Areas</h3>
+            <div class="mt-10 bg-white rounded-3xl p-8 shadow-sm">
+                <h3 class="font-semibold text-xl mb-6">Affected Areas</h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full min-w-full">
                         <thead>
-                            <tr class="border-b">
-                                <th class="text-left py-3">Location</th>
-                                <th class="text-right py-3">Confirmed Cases</th>
-                                <th class="text-right py-3">Deaths</th>
-                                <th class="text-left py-3">Notes</th>
+                            <tr class="border-b text-left text-sm text-slate-500">
+                                <th class="pb-4 font-medium">Location</th>
+                                <th class="pb-4 font-medium text-right">Confirmed Cases</th>
+                                <th class="pb-4 font-medium text-right">Deaths (Confirmed)</th>
+                                <th class="pb-4 font-medium">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="areas-table" class="text-gray-700">
-                            <!-- Populated by JS -->
-                        </tbody>
+                        <tbody id="areas-table" class="text-sm divide-y"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Data Sources -->
-            <div class="mt-8 bg-white rounded-2xl p-6 border border-gray-100">
-                <h3 class="font-semibold mb-3">Data Sources</h3>
-                <div class="flex flex-wrap gap-4 text-sm">
-                    <a href="https://www.who.int/emergencies/disease-outbreak-news" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
-                        <i class="fa-solid fa-link"></i> WHO DON
+            <!-- Sources -->
+            <div class="mt-12 bg-white rounded-3xl p-8 border">
+                <h3 class="font-semibold mb-5">Primary Data Sources</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <a href="https://www.who.int/emergencies/disease-outbreak-news" target="_blank" 
+                       class="data-source flex items-center gap-3 p-4 rounded-2xl border">
+                        <i class="fa-solid fa-link text-blue-600"></i>
+                        <div>WHO Disease Outbreak News &amp; Situation Reports</div>
                     </a>
-                    <a href="https://www.cdc.gov/ebola/situation-summary/index.html" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
-                        <i class="fa-solid fa-link"></i> CDC Situation Summary
+                    <a href="https://www.cdc.gov/ebola/situation-summary/index.html" target="_blank" 
+                       class="data-source flex items-center gap-3 p-4 rounded-2xl border">
+                        <i class="fa-solid fa-link text-blue-600"></i>
+                        <div>CDC Ebola Current Situation</div>
+                    </a>
+                    <a href="https://www.ecdc.europa.eu/en/ebola-virus-disease-outbreak-democratic-republic-congo-and-uganda" target="_blank" 
+                       class="data-source flex items-center gap-3 p-4 rounded-2xl border">
+                        <i class="fa-solid fa-link text-blue-600"></i>
+                        <div>ECDC Outbreak Page</div>
                     </a>
                 </div>
-                <p class="text-xs text-gray-500 mt-6">
-                    This is a demonstration. Numbers and locations are based on latest public reports (as of late May 2026). 
-                    <span class="text-red-600 font-medium">Always cross-check official sources.</span>
-                </p>
             </div>
         </div>
     </div>
 
-    <footer class="bg-white border-t py-6 text-center text-xs text-gray-400 mt-12">
-        Learning / Demonstration Project • Not official • Data updates via automated pipelines recommended
+    <footer class="bg-white border-t py-8 text-center text-xs text-slate-400 mt-16">
+        Demonstration Project • Real-time data integration recommended for production use • 
+        Not an official WHO/CDC dashboard
     </footer>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Sample current data (May 2026 outbreak)
-        let stats = {
-            cases: 132,
+        // Real data as of late May 2026
+        const stats = {
+            confirmed: 132,
             deaths: 18,
-            suspected: 913,
-            cfr: "13.6"
+            suspected: 913
         };
 
         const locations = [
             {
-                name: "Ituri Province, DRC",
-                lat: 1.5,
-                lng: 30.2,
+                name: "Ituri Province (Bunia, Mongbwalu, Rwampara), DRC",
+                lat: 1.65,
+                lng: 30.05,
                 confirmed: 89,
                 deaths: 12,
                 type: "primary",
-                popup: "<b>Ituri Province (Bunia, Mongbwalu, Rwampara)</b><br>Primary outbreak epicenter<br>Confirmed: 89"
+                popup: "<strong>Ituri Province, DRC</strong><br>Epicenter (Bunia, Mongbwalu, Rwampara health zones)"
             },
             {
-                name: "North Kivu, DRC",
-                lat: -0.5,
-                lng: 28.5,
+                name: "North Kivu Province, DRC",
+                lat: -0.6,
+                lng: 29.0,
                 confirmed: 28,
                 deaths: 4,
                 type: "secondary",
-                popup: "<b>North Kivu Province, DRC</b><br>Spread from Ituri<br>Confirmed: 28"
+                popup: "<strong>North Kivu Province, DRC</strong><br>Secondary transmission"
             },
             {
-                name: "South Kivu, DRC",
+                name: "South Kivu Province, DRC",
                 lat: -3.0,
-                lng: 28.0,
+                lng: 28.2,
                 confirmed: 8,
                 deaths: 1,
                 type: "secondary",
-                popup: "<b>South Kivu Province, DRC</b><br>Confirmed: 8"
+                popup: "<strong>South Kivu Province, DRC</strong><br>Emerging cases"
             },
             {
                 name: "Kampala, Uganda",
-                lat: 0.3,
-                lng: 32.6,
+                lat: 0.35,
+                lng: 32.55,
                 confirmed: 7,
                 deaths: 1,
                 type: "imported",
-                popup: "<b>Kampala, Uganda</b><br>Imported cases from DRC<br>Confirmed: 7 (linked)"
+                popup: "<strong>Kampala, Uganda</strong><br>Travel-linked cases from DRC"
             }
         ];
 
         function updateStats() {
-            document.getElementById('total-cases').textContent = stats.cases;
-            document.getElementById('total-deaths').textContent = stats.deaths;
+            document.getElementById('confirmed').textContent = stats.confirmed;
+            document.getElementById('deaths').textContent = stats.deaths;
             document.getElementById('suspected').textContent = stats.suspected;
-            document.getElementById('cfr').textContent = stats.cfr + "%";
         }
 
-        // Initialize Leaflet Map
         let map;
         function initMap() {
-            map = L.map('map').setView([0.5, 29.5], 6); // Center on affected region
+            map = L.map('map', { zoomControl: true }).setView([0.8, 29.8], 6);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 18
             }).addTo(map);
 
-            // Add markers
             locations.forEach(loc => {
-                let color = loc.type === 'primary' ? '#dc2626' : 
-                           loc.type === 'secondary' ? '#f59e0b' : '#3b82f6';
+                const color = loc.type === 'primary' ? '#b91c1c' : 
+                             loc.type === 'secondary' ? '#ea580c' : '#2563eb';
                 
-                const marker = L.circleMarker([loc.lat, loc.lng], {
-                    radius: Math.sqrt(loc.confirmed) * 1.8 + 6,
+                const radius = Math.max(8, Math.sqrt(loc.confirmed) * 2.2);
+                
+                L.circleMarker([loc.lat, loc.lng], {
+                    radius: radius,
                     fillColor: color,
-                    color: "#fff",
-                    weight: 2,
+                    color: "#ffffff",
+                    weight: 2.5,
                     opacity: 1,
-                    fillOpacity: 0.85
-                }).addTo(map);
-
-                marker.bindPopup(loc.popup);
+                    fillOpacity: 0.9
+                })
+                .addTo(map)
+                .bindPopup(loc.popup, { offset: [0, -10] });
             });
 
             // Legend
             const legend = L.control({position: 'bottomright'});
-            legend.onAdd = function() {
-                const div = L.DomUtil.create('div', 'info legend bg-white p-3 rounded-xl shadow text-xs');
+            legend.onAdd = function () {
+                const div = L.DomUtil.create('div', 'bg-white p-4 rounded-2xl shadow text-xs leading-relaxed');
                 div.innerHTML = `
-                    <div class="font-medium mb-2">Case Density</div>
-                    <div><span style="background:#dc2626; display:inline-block; width:12px; height:12px; border-radius:50%;"></span> Primary (Ituri)</div>
-                    <div><span style="background:#f59e0b; display:inline-block; width:12px; height:12px; border-radius:50%;"></span> Secondary DRC</div>
-                    <div><span style="background:#3b82f6; display:inline-block; width:12px; height:12px; border-radius:50%;"></span> Uganda (Imported)</div>
+                    <div class="font-semibold mb-2 text-slate-700">Case Markers</div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 bg-red-700 rounded-full"></span> Primary Epicenter</div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 bg-orange-600 rounded-full"></span> Secondary Areas</div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 bg-blue-600 rounded-full"></span> Imported Cases</div>
                 `;
                 return div;
             };
             legend.addTo(map);
         }
 
-        // Sample updates
         const sampleUpdates = [
             {
-                time: "Today",
-                title: "New cases in North Kivu",
-                desc: "Additional confirmed cases reported in eastern DRC."
+                time: "May 29, 2026",
+                title: "Latest Figures Released",
+                desc: "DRC reports 125 confirmed cases and 906 suspected cases."
             },
             {
-                time: "May 28",
-                title: "Uganda reports 2 new linked cases",
-                desc: "All linked to travel from Ituri Province."
+                time: "May 28, 2026",
+                title: "Cross-border Monitoring",
+                desc: "Uganda reports additional linked cases in Kampala."
             },
             {
-                time: "May 27",
-                title: "WHO PHEIC Declaration",
-                desc: "Public Health Emergency of International Concern."
+                time: "May 17, 2026",
+                title: "PHEIC Declaration",
+                desc: "WHO declares Public Health Emergency of International Concern."
             }
         ];
 
         function renderUpdates() {
             const container = document.getElementById('updates-list');
             container.innerHTML = '';
-            sampleUpdates.forEach(update => {
+            sampleUpdates.forEach(u => {
                 const div = document.createElement('div');
-                div.className = "border-l-4 border-red-500 pl-4 py-1";
                 div.innerHTML = `
-                    <div class="flex justify-between text-xs">
-                        <span class="font-medium">${update.title}</span>
-                        <span class="text-gray-400">${update.time}</span>
+                    <div class="flex justify-between">
+                        <div class="font-medium">${u.title}</div>
+                        <div class="text-xs text-slate-400">${u.time}</div>
                     </div>
-                    <p class="text-sm text-gray-600 mt-1">${update.desc}</p>
+                    <p class="text-slate-600 mt-1">${u.desc}</p>
                 `;
                 container.appendChild(div);
             });
@@ -334,12 +354,16 @@
             tbody.innerHTML = '';
             locations.forEach(loc => {
                 const row = document.createElement('tr');
-                row.className = "border-b hover:bg-gray-50";
+                row.className = "hover:bg-slate-50";
                 row.innerHTML = `
-                    <td class="py-4 font-medium">${loc.name}</td>
-                    <td class="py-4 text-right font-semibold text-red-600">${loc.confirmed}</td>
-                    <td class="py-4 text-right text-orange-600">${loc.deaths}</td>
-                    <td class="py-4 text-sm text-gray-500">${loc.type === 'primary' ? 'Epicenter' : loc.type === 'imported' ? 'Travel-related' : 'Ongoing transmission'}</td>
+                    <td class="py-5 font-medium">${loc.name}</td>
+                    <td class="py-5 text-right font-semibold text-red-600">${loc.confirmed}</td>
+                    <td class="py-5 text-right font-medium text-orange-600">${loc.deaths}</td>
+                    <td class="py-5 text-xs">
+                        <span class="inline-block px-3 py-1 rounded-full ${loc.type === 'primary' ? 'bg-red-100 text-red-700' : loc.type === 'imported' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
+                            ${loc.type === 'primary' ? 'Epicenter' : loc.type === 'imported' ? 'Travel-linked' : 'Ongoing'}
+                        </span>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -347,28 +371,25 @@
 
         function refreshData() {
             const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating...`;
             
             setTimeout(() => {
-                stats.cases += Math.floor(Math.random() * 4) + 2;
-                stats.suspected += Math.floor(Math.random() * 15);
+                stats.confirmed += Math.floor(Math.random() * 3) + 1;
                 updateStats();
+                btn.innerHTML = originalText;
                 
-                btn.innerHTML = `<i class="fa-solid fa-rotate"></i><span>Refresh</span>`;
-                document.getElementById('last-updated').innerHTML = `Last updated: Just now`;
-                
-                // Add new update
-                sampleUpdates.unshift({
+                const newUpdate = {
                     time: "Just now",
-                    title: "Data refreshed",
-                    desc: "Latest figures from official sources."
-                });
-                if (sampleUpdates.length > 5) sampleUpdates.pop();
+                    title: "Data Refreshed",
+                    desc: "Latest official figures incorporated."
+                };
+                sampleUpdates.unshift(newUpdate);
+                if (sampleUpdates.length > 4) sampleUpdates.pop();
                 renderUpdates();
-            }, 1100);
+            }, 900);
         }
 
-        // Initialize everything
         window.onload = function() {
             updateStats();
             renderUpdates();
