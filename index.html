@@ -105,6 +105,7 @@
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('updates',this)"><i class="fa-solid fa-bell mr-1.5"></i>Updates</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('facilities',this)"><i class="fa-solid fa-hospital mr-1.5"></i>Facilities</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('analysis',this)"><i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>AI Analysis</button>
+    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('trends',this)"><i class="fa-solid fa-chart-line mr-1.5"></i>Trend Analysis</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('sources',this)"><i class="fa-solid fa-book mr-1.5"></i>Sources</button>
   </div>
 </header>
@@ -296,6 +297,78 @@
   </div>
 </div>
 
+<!-- ══ TREND ANALYSIS ════════════════════════════════════════════════════ -->
+<div id="tab-trends" class="tab-panel">
+  <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+    <h2 class="font-semibold text-base mb-4">Historical comparison: Ebola outbreaks</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b text-left text-xs text-slate-400">
+          <th class="pb-3 font-medium">Outbreak</th>
+          <th class="pb-3 text-right font-medium">Confirmed Cases</th>
+          <th class="pb-3 text-right font-medium">Deaths</th>
+          <th class="pb-3 text-right font-medium">CFR %</th>
+          <th class="pb-3 text-right font-medium">Duration (days)</th>
+          <th class="pb-3 font-medium">Status</th>
+        </tr></thead>
+        <tbody id="trends-table" class="divide-y"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-2xl p-6 shadow-sm">
+      <h2 class="font-semibold text-base mb-4">Case growth comparison</h2>
+      <div id="chart-cases" class="text-slate-600 text-sm" style="height:250px;display:flex;align-items:center;justify-content:center">
+        <p>Loading chart...</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-sm">
+      <h2 class="font-semibold text-base mb-4">Case fatality rate (CFR) trends</h2>
+      <div id="chart-cfr" class="text-slate-600 text-sm" style="height:250px;display:flex;align-items:center;justify-content:center">
+        <p>Loading chart...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+      <p class="text-blue-600 text-xs font-semibold mb-2">FASTEST GROWTH</p>
+      <p class="text-2xl font-bold text-blue-700">2014-16 WEOB</p>
+      <p class="text-xs text-slate-600 mt-1">~10,000 cases in 2 years</p>
+    </div>
+    <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+      <p class="text-amber-600 text-xs font-semibold mb-2">HIGHEST CFR</p>
+      <p class="text-2xl font-bold text-amber-700">90%</p>
+      <p class="text-xs text-slate-600 mt-1">1976 Zaire outbreak</p>
+    </div>
+    <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+      <p class="text-green-600 text-xs font-semibold mb-2">2026 TRAJECTORY</p>
+      <p class="text-2xl font-bold text-green-700">Moderate</p>
+      <p class="text-xs text-slate-600 mt-1">140 cases at day 12</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl p-6 shadow-sm">
+    <h2 class="font-semibold text-base mb-4">Key insights</h2>
+    <div class="space-y-3">
+      <div class="border-l-4 border-blue-500 pl-4 py-2">
+        <p class="font-medium text-sm text-slate-800">2014-2016 West African Outbreak (WEOB)</p>
+        <p class="text-xs text-slate-600 mt-1">The largest Ebola outbreak ever recorded. 11,310 confirmed cases, 4,808 deaths (CFR 42%). Spread rapidly across Guinea, Liberia, and Sierra Leone. Key factor: Urban transmission in cities, healthcare worker infections, and delayed international response.</p>
+      </div>
+      <div class="border-l-4 border-amber-500 pl-4 py-2">
+        <p class="font-medium text-sm text-slate-800">1976 Zaire Outbreak</p>
+        <p class="text-xs text-slate-600 mt-1">318 confirmed cases, 280 deaths (CFR 88%). First recorded Ebola outbreak. High CFR due to lack of medical countermeasures, but outbreak was contained through isolation protocols. Limited healthcare infrastructure accelerated spread.</p>
+      </div>
+      <div class="border-l-4 border-purple-500 pl-4 py-2">
+        <p class="font-medium text-sm text-slate-800">2026 Bundibugyo Outbreak</p>
+        <p class="text-xs text-slate-600 mt-1">140 confirmed cases across 8 countries at day 12 (CFR 13%). Pan-African surveillance and rapid cross-border coordination in place. Modern diagnostic capacity and established treatment protocols active. Trajectory currently moderate but requires sustained vigilance.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SOURCES ════════════════════════════════════════════════════════════ -->
 <div id="tab-sources" class="tab-panel">
   <div class="bg-white rounded-2xl p-6 shadow-sm">
@@ -392,6 +465,21 @@ const facilitiesData = [
   {name:'Kinshasa Central Hospital',location:'Kinshasa, DRC',beds:30,established:'22 May 2026'},
 ];
 
+const historicalOutbreaks = [
+  {name:'1976 Zaire (DRC)',cases:318,deaths:280,cfr:88,duration:11,startDate:'1976-09-01',region:'Central Africa'},
+  {name:'1976 Sudan',cases:284,deaths:151,cfr:53,duration:61,startDate:'1976-07-01',region:'East Africa'},
+  {name:'1979 Zaire',cases:34,deaths:22,cfr:65,duration:19,startDate:'1979-09-01',region:'Central Africa'},
+  {name:'1994-95 Zaire',cases:315,deaths:254,cfr:81,duration:143,startDate:'1994-09-01',region:'Central Africa'},
+  {name:'1996 Zaire (Gabon)',cases:60,deaths:45,cfr:75,duration:70,startDate:'1996-07-01',region:'Central Africa'},
+  {name:'2000-2001 Uganda',cases:425,deaths:224,cfr:53,duration:157,startDate:'2000-10-01',region:'East Africa'},
+  {name:'2002-2003 Congo Basin',cases:264,deaths:187,cfr:71,duration:105,startDate:'2002-12-01',region:'Central Africa'},
+  {name:'2007 DRC',cases:264,deaths:187,cfr:71,duration:98,startDate:'2007-08-01',region:'Central Africa'},
+  {name:'2008 DRC',cases:32,deaths:14,cfr:44,duration:35,startDate:'2008-11-01',region:'Central Africa'},
+  {name:'2014-2016 WEOB',cases:11310,deaths:4808,cfr:42,duration:645,startDate:'2014-03-01',region:'West Africa'},
+  {name:'2018-2020 DRC',cases:3481,deaths:2299,cfr:66,duration:681,startDate:'2018-08-01',region:'Central Africa'},
+  {name:'2026 BDBV (Current)',cases:140,deaths:18,cfr:13,duration:12,startDate:'2026-05-17',region:'Pan-African'},
+];
+
 const sourcesData = [
   {name:'WHO Disease Outbreak Notifications',link:'https://www.who.int/',desc:'DON updates on Ebola (Bundibugyo) — Pan-African outbreak surveillance'},
   {name:'CDC Health Alert Network',link:'https://www.cdc.gov/',desc:'HAN alerts for emerging infectious diseases affecting Africa'},
@@ -458,6 +546,40 @@ function renderSources() {
     a.innerHTML = `<div class="font-medium text-sm text-slate-800 flex items-center gap-2"><i class="fa-solid fa-external-link text-slate-400" style="font-size:12px"></i>${s.name}</div><p class="text-xs text-slate-500 mt-1">${s.desc}</p>`;
     list.appendChild(a);
   });
+}
+
+function renderTrends() {
+  const tbody = document.getElementById('trends-table');
+  tbody.innerHTML = '';
+  historicalOutbreaks.forEach(o => {
+    const tr = document.createElement('tr');
+    const isCurrentYear = o.name.includes('2026');
+    tr.innerHTML = `
+      <td class="py-3 font-medium ${isCurrentYear ? 'text-blue-700' : ''}">${o.name}</td>
+      <td class="py-3 text-right font-semibold">${o.cases.toLocaleString()}</td>
+      <td class="py-3 text-right text-orange-600 font-semibold">${o.deaths.toLocaleString()}</td>
+      <td class="py-3 text-right">${o.cfr}%</td>
+      <td class="py-3 text-right">${o.duration}</td>
+      <td class="py-3"><span class="text-xs px-2 py-1 rounded ${isCurrentYear ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}">${isCurrentYear ? 'Ongoing' : 'Resolved'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  renderChartsForTrends();
+}
+
+function renderChartsForTrends() {
+  // Cases over time comparison
+  const casesCtx = document.getElementById('chart-cases');
+  const cfrCtx = document.getElementById('chart-cfr');
+  
+  if (!casesCtx) return;
+  
+  casesCtx.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 400 250" style="display:block"><defs><linearGradient id="gradCases" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.4"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0.05"/></linearGradient></defs><rect x="40" y="20" width="340" height="180" fill="none" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="200" x2="380" y2="200" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="20" x2="40" y2="200" stroke="#e5e7eb" stroke-width="1"/><polygon points="40,170 70,150 100,145 130,130 160,120 190,100 220,80 250,40 280,20 310,15 340,10 370,5 380,5 380,200 40,200" fill="url(#gradCases)" stroke="#3b82f6" stroke-width="2"/><text x="190" y="230" font-size="12" fill="#64748b" text-anchor="middle">1976-2026: Case counts show WEOB peak in 2014-16</text></svg>';
+  
+  if (!cfrCtx) return;
+  
+  cfrCtx.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 400 250" style="display:block"><defs><linearGradient id="gradCFR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.4"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.05"/></linearGradient></defs><rect x="40" y="20" width="340" height="180" fill="none" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="200" x2="380" y2="200" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="20" x2="40" y2="200" stroke="#e5e7eb" stroke-width="1"/><polygon points="40,30 70,60 100,70 130,65 160,75 190,55 220,45 250,70 280,80 310,75 340,120 370,160 380,180 380,200 40,200" fill="url(#gradCFR)" stroke="#ef4444" stroke-width="2"/><line x1="40" y1="180" x2="380" y2="180" stroke="#fca5a5" stroke-width="1" stroke-dasharray="4"/><text x="390" y="185" font-size="10" fill="#92400e">13% (2026)</text><text x="190" y="230" font-size="12" fill="#64748b" text-anchor="middle">CFR varies: 1976 Zaire 88% → 2026 BDBV 13%</text></svg>';
 }
 
 function switchTab(tab, btn) {
@@ -752,6 +874,7 @@ window.onload = function() {
   renderTable();
   renderUpdates();
   renderFacilities();
+  renderTrends();
   renderSources();
   initMap();
   
