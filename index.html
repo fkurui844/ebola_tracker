@@ -10,7 +10,7 @@
 <style>
   body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .stat-number{font-size:2.4rem;font-weight:700;line-height:1}
-  #map{height:500px;border-radius:12px}
+  #map{height:600px;border-radius:12px}
   .leaflet-popup-content-wrapper{border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.12)}
   .leaflet-popup-content{font-size:13px;line-height:1.6}
   .quarantine-icon{background:none!important;border:none!important}
@@ -557,20 +557,117 @@ function switchTab(tab, btn) {
   if (tab === 'map' && map) {
     setTimeout(() => {
       map.invalidateSize();
-      map.setView([5, 20], 3);
+      map.setView([1, 29], 5);
     }, 100);
   }
 }
 
 function initMap() {
   if (!document.getElementById('map-container')) return;
-  map = L.map('map').setView([5, 20], 3);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'©OpenStreetMap'}).addTo(map);
-  
-  appData.mapMarkers.forEach(m => {
-    const icon = L.divIcon({html:`<i class="fa-solid fa-hospital" style="color:${m.color};font-size:20px"></i>`,iconSize:[30,30]});
-    L.marker([m.lat,m.lng],{icon}).addTo(map).bindPopup(`<strong>${m.name}</strong><br>${m.location}`);
+
+  map = L.map('map', {zoomControl: true, scrollWheelZoom: true}).setView([1, 29], 5);
+
+  // Base tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+    maxZoom: 18
+  }).addTo(map);
+
+  // Risk zones data
+  const riskZones = [
+    {lat:1.55, lng:30.2,  name:'Ituri Province', country:'DRC', risk:'High', confirmed:67, deaths:12, suspected:520, notes:'Primary epicentre. Active transmission in Bunia and surrounding areas.'},
+    {lat:-1.67,lng:29.22, name:'North Kivu',      country:'DRC', risk:'High', confirmed:42, deaths:5,  suspected:250, notes:'Ongoing cases in Goma corridor; cross-border risk to Uganda/Rwanda.'},
+    {lat:-2.5, lng:28.85, name:'South Kivu',      country:'DRC', risk:'Moderate', confirmed:16, deaths:1, suspected:90, notes:'Isolated clusters; Bukavu ETC operational.'},
+    {lat:0.32, lng:32.58, name:'Kampala',          country:'Uganda', risk:'Moderate', confirmed:9, deaths:0, suspected:46, notes:'Imported cases; UPDF Medical Centre treating patients.'},
+    {lat:-4.32,lng:15.32, name:'Kinshasa',         country:'DRC', risk:'Moderate', confirmed:0, deaths:0, suspected:22, notes:'Under enhanced surveillance due to high population density.'},
+    {lat:-1.28,lng:36.82, name:'Nairobi',          country:'Kenya', risk:'Alert', confirmed:3, deaths:0, suspected:12, notes:'KEMRI running diagnostics; border screening at Busia/Malaba.'},
+    {lat:-1.95,lng:30.06, name:'Kigali',           country:'Rwanda', risk:'Alert', confirmed:2, deaths:0, suspected:8,  notes:'Rwanda Biomedical Centre reference lab active; contact tracing ongoing.'},
+    {lat:-6.79,lng:39.27, name:'Dar es Salaam',    country:'Tanzania', risk:'Alert', confirmed:0, deaths:0, suspected:3,  notes:'Port health screening enhanced; TIDI lab on standby.'},
+    {lat:-0.41,lng:36.95, name:'Western Kenya',    country:'Kenya', risk:'Alert', confirmed:0, deaths:0, suspected:7,  notes:'Cross-border surveillance with Uganda; WHO field team deployed.'},
+    {lat:4.36, lng:18.56, name:'Bangui',           country:'CAR', risk:'Watch', confirmed:1, deaths:0, suspected:5,  notes:'Single imported case isolated; contact tracing underway.'},
+    {lat:-0.03,lng:37.90, name:'Meru / Mt Kenya',  country:'Kenya', risk:'Watch', confirmed:0, deaths:0, suspected:2,  notes:'Low-level surveillance; no confirmed cases.'},
+    {lat:-11.7,lng:43.26, name:'Comoros Islands',  country:'Comoros', risk:'Watch', confirmed:0, deaths:0, suspected:0, notes:'Port-of-entry screening active; no cases detected.'},
+  ];
+
+  const riskConfig = {
+    'High':     {color:'#dc2626', fillColor:'#dc2626', radius:28000, label:'High Transmission Risk'},
+    'Moderate': {color:'#f97316', fillColor:'#f97316', radius:22000, label:'Moderate Transmission Risk'},
+    'Alert':    {color:'#3b82f6', fillColor:'#3b82f6', radius:16000, label:'Active Surveillance & Alert'},
+    'Watch':    {color:'#8b5cf6', fillColor:'#8b5cf6', radius:12000, label:'Watch / Monitoring'},
+  };
+
+  // Treatment centres
+  const treatmentCentres = [
+    {lat:0.55,  lng:30.18, name:'Ituri ETC',         location:'Bunia, DRC',            beds:35, status:'Active'},
+    {lat:-1.67, lng:29.22, name:'N. Kivu ETC',        location:'Goma, DRC',             beds:40, status:'Active'},
+    {lat:-2.51, lng:28.86, name:'S. Kivu Isolation',  location:'Bukavu, DRC',           beds:20, status:'Active'},
+    {lat:0.32,  lng:32.58, name:'UPDF Medical Centre',location:'Kampala, Uganda',        beds:20, status:'Active'},
+    {lat:-4.32, lng:15.32, name:'Kinshasa Hospital',  location:'Kinshasa, DRC',         beds:30, status:'Standby'},
+    {lat:-1.28, lng:36.82, name:'KEMRI Lab',          location:'Nairobi, Kenya',         beds:0,  status:'Diagnostics'},
+    {lat:-1.95, lng:30.06, name:'Rwanda Ref. Lab',    location:'Kigali, Rwanda',         beds:0,  status:'Diagnostics'},
+    {lat:-6.79, lng:39.27, name:'TIDI Lab',           location:'Dar es Salaam, Tanzania',beds:0,  status:'Diagnostics'},
+  ];
+
+  // Draw risk circles
+  const riskLayerGroup = L.layerGroup();
+  riskZones.forEach(z => {
+    const cfg = riskConfig[z.risk];
+    const cfr = z.confirmed > 0 ? ((z.deaths / z.confirmed) * 100).toFixed(1) : '—';
+    const popupHtml = `
+      <div style="min-width:220px;font-family:system-ui,sans-serif">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${cfg.color};flex-shrink:0"></span>
+          <strong style="font-size:14px;color:#1e293b">${z.name}</strong>
+          <span style="font-size:11px;color:#64748b">${z.country}</span>
+        </div>
+        <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${cfg.color}22;color:${cfg.color};font-weight:600;margin-bottom:10px">${cfg.label}</span>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:8px">
+          <tr><td style="color:#64748b;padding:2px 0">Confirmed</td><td style="text-align:right;font-weight:700;color:#1e293b">${z.confirmed}</td></tr>
+          <tr><td style="color:#64748b;padding:2px 0">Deaths</td><td style="text-align:right;font-weight:700;color:#dc2626">${z.deaths}</td></tr>
+          <tr><td style="color:#64748b;padding:2px 0">Suspected</td><td style="text-align:right;font-weight:700;color:#1e293b">${z.suspected}</td></tr>
+          <tr><td style="color:#64748b;padding:2px 0">CFR</td><td style="text-align:right;font-weight:700;color:#f97316">${cfr}${cfr !== '—' ? '%' : ''}</td></tr>
+        </table>
+        <p style="font-size:11px;color:#475569;border-top:1px solid #e2e8f0;padding-top:6px;margin:0">${z.notes}</p>
+      </div>`;
+    L.circle([z.lat, z.lng], {
+      radius: cfg.radius,
+      color: cfg.color,
+      fillColor: cfg.fillColor,
+      fillOpacity: 0.18,
+      weight: 2,
+      opacity: 0.7
+    }).addTo(riskLayerGroup).bindPopup(popupHtml, {maxWidth: 280});
   });
+  riskLayerGroup.addTo(map);
+
+  // Draw treatment centre markers
+  const etcLayerGroup = L.layerGroup();
+  treatmentCentres.forEach(tc => {
+    const statusColor = tc.status === 'Active' ? '#dc2626' : tc.status === 'Standby' ? '#f97316' : '#3b82f6';
+    const icon = L.divIcon({
+      html: `<div style="background:white;border:2px solid ${statusColor};border-radius:6px;padding:3px 5px;font-size:11px;font-weight:700;color:${statusColor};white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2)">🏥 ${tc.name}</div>`,
+      className: '',
+      iconAnchor: [0, 0]
+    });
+    const popupHtml = `
+      <div style="min-width:180px;font-family:system-ui,sans-serif">
+        <strong style="font-size:13px;color:#1e293b">🏥 ${tc.name}</strong><br>
+        <span style="font-size:12px;color:#64748b">${tc.location}</span><br><br>
+        <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${statusColor}22;color:${statusColor};font-weight:600">${tc.status}</span>
+        ${tc.beds > 0 ? `<p style="font-size:12px;color:#374151;margin:8px 0 0"><strong>${tc.beds}</strong> isolation beds</p>` : ''}
+      </div>`;
+    L.marker([tc.lat, tc.lng], {icon}).addTo(etcLayerGroup).bindPopup(popupHtml, {maxWidth: 240});
+  });
+  etcLayerGroup.addTo(map);
+
+  // Layer control
+  L.control.layers(null, {
+    'Risk Zones': riskLayerGroup,
+    'Treatment Centres & Labs': etcLayerGroup
+  }, {collapsed: false, position: 'topright'}).addTo(map);
+
+  // Scale bar
+  L.control.scale({imperial: false}).addTo(map);
 }
 
 let appData = {
