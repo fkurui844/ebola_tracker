@@ -226,6 +226,27 @@
             <p class="leg-desc">Red = Active ETC &nbsp;|&nbsp; Orange = Standby &nbsp;|&nbsp; Blue = Diagnostics lab — click any marker for details</p>
           </div>
         </div>
+        <div class="legend-row">
+          <div style="background:#fff;border:2px solid #f59e0b;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:#f59e0b;flex-shrink:0;white-space:nowrap">🔶 Border</div>
+          <div>
+            <p class="leg-title">Enhanced Border Screening</p>
+            <p class="leg-desc">Thermal scanning, isolation tents, WHO rapid test kits on-site</p>
+          </div>
+        </div>
+        <div class="legend-row">
+          <div style="background:#fff;border:2px solid #10b981;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:#10b981;flex-shrink:0;white-space:nowrap">🟢 Border</div>
+          <div>
+            <p class="leg-title">Active Border Screening</p>
+            <p class="leg-desc">Temperature checks, health declarations, health officer patrols</p>
+          </div>
+        </div>
+        <div class="legend-row">
+          <div style="background:#fff;border:2px solid #94a3b8;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:#94a3b8;flex-shrink:0;white-space:nowrap">⚪ Border</div>
+          <div>
+            <p class="leg-title">Standard Monitoring</p>
+            <p class="leg-desc">Routine port health screening; no enhanced Ebola protocol yet</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -669,10 +690,69 @@ function initMap() {
   });
   etcLayerGroup.addTo(map);
 
+  // Border screening crossings
+  const borderCrossings = [
+    // Uganda–DRC
+    {lat:0.07,  lng:29.73, name:'Bunagana Border',       countries:'Uganda / DRC',   status:'Enhanced', throughput:'High', screenings:'Thermal scanning, symptom questionnaire, contact tracing register', lastCase:'27 May 2026'},
+    {lat:-0.05, lng:29.68, name:'Kyanika Crossing',      countries:'Uganda / DRC',   status:'Enhanced', throughput:'Medium', screenings:'Temperature checks, travel history form, WHO alert posters', lastCase:'None detected'},
+    {lat:-1.0,  lng:29.85, name:'Ishasha Crossing',      countries:'Uganda / DRC',   status:'Active',   throughput:'Low',  screenings:'Daily health officer patrols, spot temperature checks', lastCase:'None detected'},
+    // Rwanda–DRC
+    {lat:-1.68, lng:29.23, name:'Goma–Gisenyi Crossing', countries:'DRC / Rwanda',   status:'Enhanced', throughput:'Very High', screenings:'Mandatory symptom screening, isolation tent on-site, WHO rapid test kits available', lastCase:'25 May 2026'},
+    {lat:-2.49, lng:28.91, name:'Bukavu–Cyangugu',       countries:'DRC / Rwanda',   status:'Enhanced', throughput:'High', screenings:'Thermal cameras, health declaration cards, contact tracing', lastCase:'None detected'},
+    // Kenya–Uganda
+    {lat:0.46,  lng:34.11, name:'Busia Crossing',        countries:'Kenya / Uganda', status:'Enhanced', throughput:'Very High', screenings:'Thermal scanning, health questionnaire, ambulance on standby', lastCase:'None detected'},
+    {lat:0.60,  lng:34.26, name:'Malaba Crossing',       countries:'Kenya / Uganda', status:'Enhanced', throughput:'Very High', screenings:'Temperature checks, isolation area, WHO trained screeners', lastCase:'None detected'},
+    // Tanzania–DRC / Rwanda
+    {lat:-1.07, lng:29.59, name:'Rusizi / Uvira',        countries:'Tanzania / DRC', status:'Active',   throughput:'Medium', screenings:'Port health officer, temperature checks, health alert notices', lastCase:'None detected'},
+    {lat:-9.5,  lng:33.55, name:'Tunduma Crossing',      countries:'Tanzania / Zambia', status:'Monitoring', throughput:'High', screenings:'Standard port health screening, no enhanced protocol yet', lastCase:'None detected'},
+    // CAR–DRC
+    {lat:4.20,  lng:18.35, name:'Zongo–Bangui Crossing', countries:'CAR / DRC',      status:'Enhanced', throughput:'Medium', screenings:'WHO-deployed health team, symptom questionnaire, isolation room', lastCase:'22 May 2026'},
+    // South Sudan–Uganda
+    {lat:3.63,  lng:31.68, name:'Nimule Crossing',       countries:'S. Sudan / Uganda', status:'Active', throughput:'High', screenings:'Temperature checks, health declaration, WHO alert posters', lastCase:'None detected'},
+    // Kenya–Ethiopia
+    {lat:4.66,  lng:38.00, name:'Moyale Crossing',       countries:'Kenya / Ethiopia', status:'Monitoring', throughput:'Medium', screenings:'Standard health screening; no enhanced Ebola protocol', lastCase:'None detected'},
+  ];
+
+  const screeningConfig = {
+    'Enhanced':   {color:'#f59e0b', icon:'🔶', label:'Enhanced Screening'},
+    'Active':     {color:'#10b981', icon:'🟢', label:'Active Screening'},
+    'Monitoring': {color:'#94a3b8', icon:'⚪', label:'Standard Monitoring'},
+  };
+
+  const borderLayerGroup = L.layerGroup();
+  borderCrossings.forEach(bc => {
+    const cfg = screeningConfig[bc.status];
+    const icon = L.divIcon({
+      html: `<div style="background:white;border:2px solid ${cfg.color};border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:${cfg.color};white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;gap:4px">${cfg.icon} ${bc.name}</div>`,
+      className: '',
+      iconAnchor: [0, 12]
+    });
+    const popupHtml = `
+      <div style="min-width:240px;font-family:system-ui,sans-serif">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="font-size:16px">${cfg.icon}</span>
+          <strong style="font-size:13px;color:#1e293b">${bc.name}</strong>
+        </div>
+        <span style="font-size:11px;color:#64748b;display:block;margin-bottom:8px">${bc.countries}</span>
+        <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${cfg.color}22;color:${cfg.color};font-weight:600;margin-bottom:10px">${cfg.label}</span>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:8px">
+          <tr><td style="color:#64748b;padding:2px 0">Traffic volume</td><td style="text-align:right;font-weight:600;color:#1e293b">${bc.throughput}</td></tr>
+          <tr><td style="color:#64748b;padding:2px 0">Last case detected</td><td style="text-align:right;font-weight:600;color:${bc.lastCase === 'None detected' ? '#16a34a' : '#dc2626'}">${bc.lastCase}</td></tr>
+        </table>
+        <div style="background:#f8fafc;border-radius:6px;padding:8px;font-size:11px;color:#475569">
+          <strong style="color:#374151;display:block;margin-bottom:3px">Screening measures:</strong>
+          ${bc.screenings}
+        </div>
+      </div>`;
+    L.marker([bc.lat, bc.lng], {icon}).addTo(borderLayerGroup).bindPopup(popupHtml, {maxWidth: 300});
+  });
+  borderLayerGroup.addTo(map);
+
   // Layer control
   L.control.layers(null, {
     'Risk Zones': riskLayerGroup,
-    'Treatment Centres & Labs': etcLayerGroup
+    'Treatment Centres & Labs': etcLayerGroup,
+    'Border Screening Points': borderLayerGroup
   }, {collapsed: false, position: 'topright'}).addTo(map);
 
   // Scale bar
