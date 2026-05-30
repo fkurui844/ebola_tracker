@@ -273,7 +273,9 @@
           <th class="pb-3 text-right font-medium">Deaths</th>
           <th class="pb-3 text-right font-medium">CFR %</th>
           <th class="pb-3 text-right font-medium">Duration (days)</th>
+          <th class="pb-3 font-medium">Period</th>
           <th class="pb-3 font-medium">Status</th>
+          <th class="pb-3 font-medium">How Resolved</th>
         </tr></thead>
         <tbody id="trends-table" class="divide-y"></tbody>
       </table>
@@ -429,18 +431,18 @@ const facilitiesData = [
 ];
 
 const historicalOutbreaks = [
-  {name:'1976 Zaire (DRC)',cases:318,deaths:280,cfr:88,duration:11,startDate:'1976-09-01',region:'Central Africa'},
-  {name:'1976 Sudan',cases:284,deaths:151,cfr:53,duration:61,startDate:'1976-07-01',region:'East Africa'},
-  {name:'1979 Zaire',cases:34,deaths:22,cfr:65,duration:19,startDate:'1979-09-01',region:'Central Africa'},
-  {name:'1994-95 Zaire',cases:315,deaths:254,cfr:81,duration:143,startDate:'1994-09-01',region:'Central Africa'},
-  {name:'1996 Zaire (Gabon)',cases:60,deaths:45,cfr:75,duration:70,startDate:'1996-07-01',region:'Central Africa'},
-  {name:'2000-2001 Uganda',cases:425,deaths:224,cfr:53,duration:157,startDate:'2000-10-01',region:'East Africa'},
-  {name:'2002-2003 Congo Basin',cases:264,deaths:187,cfr:71,duration:105,startDate:'2002-12-01',region:'Central Africa'},
-  {name:'2007 DRC',cases:264,deaths:187,cfr:71,duration:98,startDate:'2007-08-01',region:'Central Africa'},
-  {name:'2008 DRC',cases:32,deaths:14,cfr:44,duration:35,startDate:'2008-11-01',region:'Central Africa'},
-  {name:'2014-2016 WEOB',cases:11310,deaths:4808,cfr:42,duration:645,startDate:'2014-03-01',region:'West Africa'},
-  {name:'2018-2020 DRC',cases:3481,deaths:2299,cfr:66,duration:681,startDate:'2018-08-01',region:'Central Africa'},
-  {name:'2026 BDBV (Current)',cases:140,deaths:18,cfr:13,duration:12,startDate:'2026-05-17',region:'Pan-African'},
+  {name:'1976 Zaire (DRC)',cases:318,deaths:280,cfr:88,duration:11,startDate:'1976-09-01',region:'Central Africa',period:'Sep – Oct 1976',resolution:'Containment via strict patient isolation and barrier nursing in Yambuku Mission Hospital; burial practices reformed; epidemic burned out naturally.'},
+  {name:'1976 Sudan',cases:284,deaths:151,cfr:53,duration:61,startDate:'1976-07-01',region:'East Africa',period:'Jun – Nov 1976',resolution:'Isolation of cases in Nzara and Maridi; closure of Maridi hospital which was amplifying transmission; WHO-led contact tracing ended the outbreak.'},
+  {name:'1979 Zaire',cases:34,deaths:22,cfr:65,duration:19,startDate:'1979-09-01',region:'Central Africa',period:'Sep – Oct 1979',resolution:'Rapid isolation of index case and contacts around Yambuku; no healthcare amplification; outbreak self-limited within weeks.'},
+  {name:'1994-95 Zaire',cases:315,deaths:254,cfr:81,duration:143,startDate:'1994-09-01',region:'Central Africa',period:'Sep 1994 – Jan 1995',resolution:'WHO and MSF deployed field teams; strict isolation units established in Kikwit; community education on safe burial practices ended transmission chains.'},
+  {name:'1996 Zaire (Gabon)',cases:60,deaths:45,cfr:75,duration:70,startDate:'1996-07-01',region:'Central Africa',period:'Jan – Jul 1996',resolution:'Gabonese Ministry of Health with WHO; contact tracing and isolation; linked to butchering of a chimpanzee — wildlife exposure warnings issued.'},
+  {name:'2000-2001 Uganda',cases:425,deaths:224,cfr:53,duration:157,startDate:'2000-10-01',region:'East Africa',period:'Aug 2000 – Jan 2001',resolution:'Uganda MoH and WHO established isolation wards in Gulu; community mobilisation, safe burial teams, and active surveillance ended the largest Sudan-strain outbreak.'},
+  {name:'2002-2003 Congo Basin',cases:264,deaths:187,cfr:71,duration:105,startDate:'2002-12-01',region:'Central Africa',period:'Dec 2002 – Apr 2003',resolution:'Field teams isolated cases in Mbomo and Kéllé districts; restricted movement in forest villages; resolved after removing index source (wildlife contact).'},
+  {name:'2007 DRC',cases:264,deaths:187,cfr:71,duration:98,startDate:'2007-08-01',region:'Central Africa',period:'Aug – Nov 2007',resolution:'DRC MoH with WHO; isolation centres established in Kasai Occidental; survivor-led community outreach and safe burial practices terminated chains.'},
+  {name:'2008 DRC',cases:32,deaths:14,cfr:44,duration:35,startDate:'2008-11-01',region:'Central Africa',period:'Nov 2008 – Jan 2009',resolution:'Rapid response by DRC authorities; standard isolation and contact tracing; small cluster contained quickly due to geographic remoteness.'},
+  {name:'2014-2016 WEOB',cases:11310,deaths:4808,cfr:42,duration:645,startDate:'2014-03-01',region:'West Africa',period:'Mar 2014 – Jun 2016',resolution:'Largest outbreak in history. Resolved through mass deployment of international aid workers, experimental ZMapp treatment, rVSV-ZEBOV vaccine trials, extensive contact tracing across Guinea, Liberia and Sierra Leone, and WHO PHEIC declaration driving global response.'},
+  {name:'2018-2020 DRC',cases:3481,deaths:2299,cfr:66,duration:681,startDate:'2018-08-01',region:'Central Africa',period:'Aug 2018 – Jun 2020',resolution:'Second-largest outbreak ever, complicated by armed conflict in North Kivu. Resolved through rVSV-ZEBOV (Ervebo) ring vaccination, monoclonal antibody treatments (mAb114, REGN-EB3), and sustained community engagement despite security challenges.'},
+  {name:'2026 BDBV (Current)',cases:140,deaths:18,cfr:13,duration:12,startDate:'2026-05-17',region:'Global',period:'May 2026 – ongoing',resolution:'Ongoing. WHO PHEIC declared 17 May 2026. Global surveillance active; treatment centres established across DRC and Uganda; no approved vaccine for Bundibugyo strain.'},
 ];
 
 const sourcesData = [
@@ -523,7 +525,9 @@ function renderTrends() {
       <td class="py-3 text-right text-orange-600 font-semibold">${o.deaths.toLocaleString()}</td>
       <td class="py-3 text-right">${o.cfr}%</td>
       <td class="py-3 text-right">${o.duration}</td>
+      <td class="py-3 text-xs text-slate-500 whitespace-nowrap">${o.period}</td>
       <td class="py-3"><span class="text-xs px-2 py-1 rounded ${isCurrentYear ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}">${isCurrentYear ? 'Ongoing' : 'Resolved'}</span></td>
+      <td class="py-3 text-xs text-slate-600" style="max-width:320px;min-width:200px">${o.resolution}</td>
     `;
     tbody.appendChild(tr);
   });
