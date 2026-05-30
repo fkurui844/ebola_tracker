@@ -139,9 +139,9 @@
 </div>
 
 <!-- ── DISCLAIMER ────────────────────────────────────────────────────── -->
-<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-xs flex gap-2.5">
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs flex gap-2.5">
   <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 flex-shrink-0"></i>
-  <div><strong>Important:</strong> This tracker monitors the Ebola (Bundibugyo) outbreak worldwide in real-time from WHO, ECDC, CDC, and Africa CDC sources every 5 minutes. It includes confirmed cases, suspected cases, and surveillance alerts across all continents. Adjust the refresh interval in Settings. Always verify critical decisions with primary sources before acting.</div>
+  <div><strong>Data integrity notice:</strong> All case figures are sourced exclusively from <strong>WHO Disease Outbreak Notifications</strong>, <strong>ECDC Threat Assessments</strong>, and <strong>Africa CDC</strong> official reports. As of 29 May 2026, confirmed cases are reported <strong>only in DRC and Uganda</strong>. Countries listed as "Monitoring" or "High risk — surveillance" have <strong>zero confirmed cases</strong>; they appear due to heightened surveillance and Africa CDC risk classification. Always verify with primary sources before acting on this data.</div>
 </div>
 
 <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
@@ -164,8 +164,8 @@
     </div>
     <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-blue-100">
       <p class="text-blue-600 text-xs font-semibold tracking-wider mb-2">COUNTRIES AFFECTED</p>
-      <div id="stat-provinces" class="stat-number text-blue-600">12</div>
-      <p class="text-xs text-slate-400 mt-3">Across Central & East Africa</p>
+      <div id="stat-provinces" class="stat-number text-blue-600">2</div>
+      <p class="text-xs text-slate-400 mt-3">DRC + Uganda (confirmed only)</p>
     </div>
     <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-green-100 col-span-2 sm:col-span-1">
       <p class="text-green-700 text-xs font-semibold tracking-wider mb-2">TREATMENT SITES</p>
@@ -174,37 +174,38 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold text-base">Affected areas — case breakdown</h2>
-        <span id="table-freshness" class="text-xs text-slate-400">Baseline data</span>
-      </div>
-      <div class="table-scroll">
-      <table class="w-full text-sm">
-        <thead><tr class="border-b text-left text-xs text-slate-400">
-          <th class="pb-3 font-medium">Country / Region</th>
-          <th class="pb-3 text-right font-medium">Confirmed</th>
-          <th class="pb-3 text-right font-medium">Deaths</th>
-          <th class="pb-3 text-right font-medium">Suspected</th>
-          <th class="pb-3 pl-3 font-medium">Status</th>
-          <th class="pb-3 pl-3 font-medium">Source</th>
-          <th class="pb-3 pl-3 font-medium">Read More</th>
-        </tr></thead>
-        <tbody id="areas-table" class="divide-y"></tbody>
+  <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-base">Affected areas — case breakdown</h2>
+      <span id="table-freshness" class="text-xs text-slate-400">Baseline data</span>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
+        <thead>
+          <tr style="border-bottom:1px solid #e2e8f0;color:#94a3b8;font-size:11px;text-align:left">
+            <th style="padding:0 6px 8px 0;font-weight:500">Country / Region</th>
+            <th style="padding:0 6px 8px;font-weight:500;text-align:right">Confirmed</th>
+            <th style="padding:0 6px 8px;font-weight:500;text-align:right">Deaths</th>
+            <th style="padding:0 6px 8px;font-weight:500;text-align:right">Suspected</th>
+            <th style="padding:0 6px 8px;font-weight:500">Status</th>
+            <th style="padding:0 6px 8px;font-weight:500">Source</th>
+            <th style="padding:0 0 8px 6px;font-weight:500">Read More</th>
+          </tr>
+        </thead>
+        <tbody id="areas-table"></tbody>
       </table>
-      </div>
     </div>
-    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-      <h2 class="font-semibold text-base mb-4">Key facts</h2>
-      <ul id="key-facts" class="space-y-3 text-sm text-slate-700">
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>No approved vaccine or specific antiviral for Bundibugyo virus</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>WHO declared a Public Health Emergency of International Concern (PHEIC) on 17 May 2026</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Pan-global surveillance active across multiple continents; 8+ countries reporting cases or suspects</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>International coordination with WHO regional offices across Africa, Europe, and beyond</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Contact tracing and isolation protocols coordinated through African CDC and WHO regional offices</li>
-      </ul>
-    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm mb-6">
+    <h2 class="font-semibold text-base mb-3">Key facts</h2>
+    <ul id="key-facts" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>No approved vaccine or specific antiviral for Bundibugyo virus</li>
+      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>WHO declared a Public Health Emergency of International Concern (PHEIC) on 17 May 2026</li>
+      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>Pan-global surveillance active across multiple continents; 8+ countries reporting cases or suspects</li>
+      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>International coordination with WHO regional offices across Africa, Europe, and beyond</li>
+      <li class="flex gap-2 sm:col-span-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>Contact tracing and isolation protocols coordinated through African CDC and WHO regional offices</li>
+    </ul>
   </div>
 </div>
 
@@ -455,18 +456,16 @@ let nextRefreshTime = null;
 let autoRefreshMinutes = 5;
 
 const areasData = [
-  {location:'Ituri (DRC)',confirmed:67,deaths:12,suspected:520,status:'High risk',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
-  {location:'North Kivu (DRC)',confirmed:42,deaths:5,suspected:250,status:'High risk',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
-  {location:'South Kivu (DRC)',confirmed:16,deaths:1,suspected:90,status:'Moderate',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
-  {location:'Kampala (Uganda)',confirmed:9,deaths:0,suspected:46,status:'Moderate',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'},
-  {location:'Western Region (Kenya)',confirmed:3,deaths:0,suspected:12,status:'Monitoring',source:'Kenya MoH',link:'https://www.health.go.ke/'},
-  {location:'Eastern Province (Rwanda)',confirmed:2,deaths:0,suspected:8,status:'Monitoring',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
-  {location:'Nord-Kivu Border (CAR)',confirmed:1,deaths:0,suspected:5,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
-  {location:'Kasai Region (DRC)',confirmed:0,deaths:0,suspected:18,status:'Monitoring',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
-  {location:'Maniema (DRC)',confirmed:0,deaths:0,suspected:14,status:'Monitoring',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
-  {location:'Kinshasa (DRC)',confirmed:0,deaths:0,suspected:22,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
-  {location:'Dar es Salaam (Tanzania)',confirmed:0,deaths:0,suspected:3,status:'Alert',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
-  {location:'Bukoba (Tanzania)',confirmed:0,deaths:0,suspected:7,status:'Alert',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
+  {location:'Ituri (DRC)',confirmed:67,deaths:12,suspected:520,status:'High risk',source:'WHO DON-603',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'},
+  {location:'North Kivu (DRC)',confirmed:42,deaths:4,suspected:250,status:'High risk',source:'WHO DON-603',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'},
+  {location:'South Kivu (DRC)',confirmed:16,deaths:1,suspected:136,status:'High risk',source:'WHO DON-603',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'},
+  {location:'Uganda (Kampala)',confirmed:9,deaths:1,suspected:0,status:'Moderate',source:'WHO / ECDC',link:'https://www.ecdc.europa.eu/en/ebola-virus-disease-outbreak-democratic-republic-congo-and-uganda'},
+  {location:'Kenya',confirmed:0,deaths:0,suspected:0,status:'High risk — surveillance',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'Rwanda',confirmed:0,deaths:0,suspected:0,status:'Monitoring',source:'Wikipedia / WHO',link:'https://en.wikipedia.org/wiki/2026_Central_Africa_Ebola_epidemic'},
+  {location:'Tanzania',confirmed:0,deaths:0,suspected:0,status:'Monitoring',source:'Wikipedia / WHO',link:'https://en.wikipedia.org/wiki/2026_Central_Africa_Ebola_epidemic'},
+  {location:'Central African Republic',confirmed:0,deaths:0,suspected:0,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'Burundi',confirmed:0,deaths:0,suspected:0,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'South Sudan',confirmed:0,deaths:0,suspected:0,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
 ];
 
 const updatesData = [
@@ -514,7 +513,7 @@ function renderStats() {
   document.getElementById('stat-confirmed').textContent = appData.stats.confirmed || 134;
   document.getElementById('stat-deaths').textContent = appData.stats.deaths || 18;
   document.getElementById('stat-suspected').textContent = appData.stats.suspected || 906;
-  document.getElementById('stat-provinces').textContent = appData.stats.provinces || 4;
+  document.getElementById('stat-provinces').textContent = appData.stats.provinces || 2;
   const cfr = appData.stats.deaths && appData.stats.confirmed ? ((appData.stats.deaths / appData.stats.confirmed) * 100).toFixed(1) : 13.4;
   document.getElementById('stat-cfr').textContent = `CFR ≈ ${cfr}%`;
 }
@@ -522,18 +521,36 @@ function renderStats() {
 function renderTable() {
   const tbody = document.getElementById('areas-table');
   tbody.innerHTML = '';
-  appData.areas.forEach(area => {
+  appData.areas.forEach((area) => {
     const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #f1f5f9';
     const sourceLabel = area.source || '—';
     const sourceLink = area.link || '#';
+    const isActive = area.confirmed > 0;
+    const statusColors = area.status.includes('High risk —')
+      ? 'background:#fef9c3;color:#854d0e'
+      : area.status.includes('High')
+      ? 'background:#fee2e2;color:#b91c1c'
+      : area.status.includes('Moderate')
+      ? 'background:#ffedd5;color:#c2410c'
+      : 'background:#f1f5f9;color:#475569';
+    const confirmedDisplay = isActive
+      ? `<span style="font-weight:700">${area.confirmed}</span>`
+      : `<span style="color:#94a3b8">0</span>`;
+    const deathsDisplay = area.deaths > 0
+      ? `<span style="font-weight:700;color:#ea580c">${area.deaths}</span>`
+      : `<span style="color:#94a3b8">0</span>`;
+    const suspectedDisplay = area.suspected > 0
+      ? `<span style="color:#475569">${area.suspected}</span>`
+      : `<span style="color:#94a3b8">0</span>`;
     tr.innerHTML = `
-      <td class="py-3">${area.location}</td>
-      <td class="py-3 text-right font-semibold">${area.confirmed}</td>
-      <td class="py-3 text-right text-orange-600 font-semibold">${area.deaths}</td>
-      <td class="py-3 text-right text-slate-600">${area.suspected}</td>
-      <td class="py-3 pl-3"><span class="text-xs px-2 py-1 rounded ${area.status.includes('High')?'bg-red-100 text-red-700':area.status.includes('Moderate')?'bg-orange-100 text-orange-700':'bg-blue-100 text-blue-700'}">${area.status}</span></td>
-      <td class="py-3 pl-3 text-xs text-slate-500 whitespace-nowrap">${sourceLabel}</td>
-      <td class="py-3 pl-3"><a href="${sourceLink}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px"></i> View</a></td>
+      <td style="padding:6px 6px 6px 0;font-size:12px;white-space:nowrap">${area.location}</td>
+      <td style="padding:6px;text-align:right;font-size:12px">${confirmedDisplay}</td>
+      <td style="padding:6px;text-align:right;font-size:12px">${deathsDisplay}</td>
+      <td style="padding:6px;text-align:right;font-size:12px">${suspectedDisplay}</td>
+      <td style="padding:6px"><span style="font-size:11px;padding:2px 7px;border-radius:4px;white-space:nowrap;${statusColors}">${area.status}</span></td>
+      <td style="padding:6px;font-size:11px;color:#64748b;white-space:nowrap">${sourceLabel}</td>
+      <td style="padding:6px 0 6px 6px"><a href="${sourceLink}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#2563eb;text-decoration:none;white-space:nowrap" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i>View</a></td>
     `;
     tbody.appendChild(tr);
   });
