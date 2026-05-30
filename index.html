@@ -80,7 +80,7 @@
       </div>
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Ebola Outbreak Tracker</h1>
-        <p class="text-slate-500 text-xs">Bundibugyo Virus (BDBV) &nbsp;•&nbsp; Pan-African Surveillance &nbsp;•&nbsp; 2026</p>
+        <p class="text-slate-500 text-xs">Bundibugyo Virus (BDBV) &nbsp;•&nbsp; Global Surveillance &nbsp;•&nbsp; 2026</p>
       </div>
     </div>
     <div class="flex items-center gap-4 flex-wrap">
@@ -104,7 +104,6 @@
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('map',this)"><i class="fa-solid fa-map-location-dot mr-1.5"></i>Map</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('updates',this)"><i class="fa-solid fa-bell mr-1.5"></i>Updates</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('facilities',this)"><i class="fa-solid fa-hospital mr-1.5"></i>Facilities</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('analysis',this)"><i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>AI Analysis</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('trends',this)"><i class="fa-solid fa-chart-line mr-1.5"></i>Trend Analysis</button>
     <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('sources',this)"><i class="fa-solid fa-book mr-1.5"></i>Sources</button>
   </div>
@@ -122,7 +121,7 @@
 <!-- ── DISCLAIMER ────────────────────────────────────────────────────── -->
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-xs flex gap-2.5">
   <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 flex-shrink-0"></i>
-  <div><strong>Important:</strong> This tracker monitors the Ebola (Bundibugyo) outbreak across all African nations in real-time from WHO, ECDC, CDC, and Africa CDC sources every 5 minutes. It includes confirmed cases, suspected cases, and surveillance alerts across the continent. Adjust the refresh interval in Settings. Always verify critical decisions with primary sources before acting.</div>
+  <div><strong>Important:</strong> This tracker monitors the Ebola (Bundibugyo) outbreak worldwide in real-time from WHO, ECDC, CDC, and Africa CDC sources every 5 minutes. It includes confirmed cases, suspected cases, and surveillance alerts across all continents. Adjust the refresh interval in Settings. Always verify critical decisions with primary sources before acting.</div>
 </div>
 
 <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
@@ -177,8 +176,8 @@
       <ul id="key-facts" class="space-y-3 text-sm text-slate-700">
         <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>No approved vaccine or specific antiviral for Bundibugyo virus</li>
         <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>WHO declared a Public Health Emergency of International Concern (PHEIC) on 17 May 2026</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Pan-African surveillance active across 12+ nations; 8 countries reporting cases or suspects</li>
-        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Cross-border coordination with Kenya, Rwanda, Tanzania, CAR, and others</li>
+        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Pan-global surveillance active across multiple continents; 8+ countries reporting cases or suspects</li>
+        <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>International coordination with WHO regional offices across Africa, Europe, and beyond</li>
         <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>Contact tracing and isolation protocols coordinated through African CDC and WHO regional offices</li>
       </ul>
     </div>
@@ -261,38 +260,6 @@
         <div class="font-medium text-sm text-slate-800">UPDF Medical Centre</div>
         <p class="text-xs text-slate-500 mt-1">Kampala, Uganda • 20 beds • Established: 19 May 2026</p>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ AI ANALYSIS ════════════════════════════════════════════════════════ -->
-<div id="tab-analysis" class="tab-panel">
-  <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
-    <h2 class="font-semibold text-base mb-4">Ask an epidemiologist</h2>
-    <div class="flex gap-2 mb-4">
-      <input id="analysis-query" type="text" placeholder="e.g., What is the CFR for Bundibugyo virus?" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-      <button onclick="runAnalysis()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">Search</button>
-    </div>
-    <div class="flex gap-2 flex-wrap mb-4">
-      <button onclick="askPreset('What is the current case fatality rate and how does it compare to past Ebola outbreaks?')" class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition">CFR vs. history</button>
-      <button onclick="askPreset('What prevention measures are most effective for Bundibugyo virus?')" class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition">Prevention</button>
-      <button onclick="askPreset('How many countries have reported cases and what is the transmission risk to neighboring regions?')" class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition">Cross-border risk</button>
-    </div>
-    <div id="analysis-output" class="hidden">
-      <div class="border-l-4 border-red-500 pl-4 py-2 mb-4 bg-slate-50 rounded-r">
-        <p id="analysis-text" class="text-sm text-slate-700 leading-relaxed"></p>
-        <p id="analysis-source-tag" class="text-xs text-slate-500 mt-2"></p>
-      </div>
-    </div>
-    <div id="analysis-loading" class="hidden">
-      <div class="flex items-center gap-2 mb-2">
-        <i class="fa-solid fa-spinner fa-spin text-slate-400"></i>
-        <p id="analysis-status" class="text-sm text-slate-600">Searching…</p>
-      </div>
-    </div>
-    <div id="analysis-history-wrap" class="hidden border-t pt-4 mt-4">
-      <p class="text-xs font-semibold text-slate-600 mb-3">History</p>
-      <div id="analysis-history" class="space-y-2"></div>
     </div>
   </div>
 </div>
@@ -430,7 +397,6 @@ let autoRefreshInterval = null;
 let countdownInterval = null;
 let nextRefreshTime = null;
 let autoRefreshMinutes = 5;
-let analysisHistory = [];
 
 const areasData = [
   {location:'Ituri (DRC)',confirmed:67,deaths:12,suspected:520,status:'High risk'},
@@ -587,11 +553,17 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
   btn.classList.add('active');
+  if (tab === 'map' && map) {
+    setTimeout(() => {
+      map.invalidateSize();
+      map.setView([5, 20], 3);
+    }, 100);
+  }
 }
 
 function initMap() {
   if (!document.getElementById('map-container')) return;
-  map = L.map('map').setView([-8, 24], 3);
+  map = L.map('map').setView([5, 20], 3);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'©OpenStreetMap'}).addTo(map);
   
   appData.mapMarkers.forEach(m => {
@@ -640,7 +612,7 @@ async function fetchLiveData(silent = false) {
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:800,
-        system:`You are an expert epidemiologist monitoring the 2026 Ebola (Bundibugyo) outbreak across Africa. Return ONLY a valid JSON object (no markdown, no preamble) with this exact structure:
+        system:`You are an expert epidemiologist monitoring the 2026 Ebola (Bundibugyo) outbreak worldwide. Return ONLY a valid JSON object (no markdown, no preamble) with this exact structure:
 {
   "stats":{"confirmed":NUMBER,"deaths":NUMBER,"suspected":NUMBER,"provinces":NUMBER},
   "areas":[{"location":"STRING","confirmed":NUMBER,"deaths":NUMBER,"suspected":NUMBER,"status":"STRING"},...],
@@ -648,9 +620,9 @@ async function fetchLiveData(silent = false) {
   "dataAsOf":"STRING",
   "sources":["WHO","ECDC","CDC","Africa CDC"]
 }
-Track all African nations. Search for the latest from WHO, ECDC, CDC, and Africa CDC. Include all confirmed, suspected, and monitored cases across the continent. Use baseline if no newer data found.`,
+Track all nations worldwide. Search for the latest from WHO, ECDC, CDC, and Africa CDC. Include all confirmed, suspected, and monitored cases across all continents. Use baseline if no newer data found.`,
         tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:'What is the current status of the 2026 Ebola (Bundibugyo) outbreak in DRC and Uganda as of today?'}]
+        messages:[{role:'user',content:'What is the current worldwide status of the 2026 Ebola (Bundibugyo) outbreak as of today?'}]
       })
     });
 
@@ -783,90 +755,6 @@ function saveSettings() {
   if (document.getElementById('enable-notifications').checked && 'Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-}
-
-function askPreset(q) {
-  document.getElementById('analysis-query').value = q;
-  runAnalysis();
-}
-
-async function runAnalysis() {
-  const query = document.getElementById('analysis-query').value.trim();
-  if (!query) return;
-
-  const outputDiv = document.getElementById('analysis-output');
-  const textDiv = document.getElementById('analysis-text');
-  const loadingDiv = document.getElementById('analysis-loading');
-  const statusEl = document.getElementById('analysis-status');
-  const sourceTag = document.getElementById('analysis-source-tag');
-
-  outputDiv.classList.add('hidden');
-  loadingDiv.classList.remove('hidden');
-  textDiv.textContent = '';
-
-  const statuses = ['Searching WHO, ECDC and CDC…','Cross-referencing reports…','Synthesising findings…'];
-  let si = 0;
-  const st = setInterval(()=>{ if(si<statuses.length) statusEl.textContent=statuses[si++]; }, 2000);
-
-  const systemPrompt = `You are an expert epidemiologist monitoring the 2026 Ebola (Bundibugyo) outbreak across Africa. Pan-African baseline (29 May 2026): 140 confirmed cases across 8 countries, 18 deaths, 1020+ suspected cases across 12+ nations under surveillance. Focus on continental spread, cross-border movements, and regional response. Be concise, factual, cite sources.`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:800,
-        system: systemPrompt,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:query}]
-      })
-    });
-
-    clearInterval(st);
-    const data = await resp.json();
-    let answer = '';
-    let sources = [];
-
-    if (data.content) {
-      for (const block of data.content) {
-        if (block.type === 'text') answer += block.text;
-        if (block.type === 'tool_use' && block.name === 'web_search') {
-          const q = block.input && block.input.query;
-          if (q) sources.push(q);
-        }
-      }
-    }
-
-    loadingDiv.classList.add('hidden');
-    outputDiv.classList.remove('hidden');
-    sourceTag.textContent = sources.length ? `(searched: ${sources.slice(0,2).join('; ')})` : '(from baseline)';
-    textDiv.textContent = answer;
-
-    analysisHistory.unshift({ q: query, a: answer, sources });
-    renderAnalysisHistory();
-    document.getElementById('analysis-query').value = '';
-  } catch(err) {
-    clearInterval(st);
-    loadingDiv.classList.add('hidden');
-    outputDiv.classList.remove('hidden');
-    textDiv.textContent = 'Error fetching analysis.';
-    console.error(err);
-  }
-}
-
-function renderAnalysisHistory() {
-  const wrap = document.getElementById('analysis-history-wrap');
-  const hist = document.getElementById('analysis-history');
-  if (analysisHistory.length < 2) { wrap.classList.add('hidden'); return; }
-  wrap.classList.remove('hidden');
-  hist.innerHTML = '';
-  analysisHistory.slice(1).forEach(h => {
-    const d = document.createElement('div');
-    d.className = 'border rounded-lg p-3 bg-slate-50';
-    d.innerHTML = `<p style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Q: ${h.q}</p><p style="font-size:12px;color:#6b7280">${h.a.slice(0,200)}${h.a.length>200?'…':''}</p>`;
-    hist.appendChild(d);
-  });
 }
 
 window.onload = function() {
