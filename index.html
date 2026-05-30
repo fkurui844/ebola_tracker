@@ -62,6 +62,10 @@
   .refresh-indicator{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#15803d;font-weight:500}
   .refresh-indicator i{animation:spin 1s linear infinite}
   @keyframes spin{100%{transform:rotate(360deg)}}
+  .live-badge-header{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid rgba(220,38,38,.4);border-radius:20px;background:rgba(220,38,38,.05);font-size:12px;font-weight:600;letter-spacing:0.5px}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#dc2626;animation:pulse-live 1.5s ease-in-out infinite}
+  @keyframes pulse-live{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}100%{transform:scale(1);opacity:1}}
+  .live-text{color:#dc2626;text-transform:uppercase;letter-spacing:1px}
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -80,19 +84,18 @@
       </div>
     </div>
     <div class="flex items-center gap-4 flex-wrap">
+      <div class="live-badge-header">
+        <div class="live-dot"></div>
+        <span class="live-text">Live</span>
+      </div>
       <div class="flex items-center gap-2 text-red-600">
         <div class="pulse-dot"></div>
         <span class="font-semibold text-xs">PHEIC ACTIVE</span>
       </div>
-      <div id="data-freshness" class="stale-badge">⏳ Not yet fetched</div>
-      <div id="last-fetch-time" class="text-xs text-slate-400"></div>
-      <button id="live-btn" onclick="fetchLiveData()"
-              class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
-        <i class="fa-solid fa-satellite-dish"></i> Update Now
-      </button>
+      <div id="last-fetch-time" class="text-xs text-slate-400">Auto-updating…</div>
       <button id="settings-btn" onclick="openSettings()"
               class="flex items-center gap-2 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium transition-colors">
-        <i class="fa-solid fa-gear"></i>
+        <i class="fa-solid fa-gear"></i> Settings
       </button>
     </div>
   </div>
@@ -107,19 +110,6 @@
 </header>
 
 <div class="p-6">
-
-<!-- ── AUTO-REFRESH STATUS ────────────────────────────────────────────── -->
-<div id="auto-refresh-panel" class="auto-refresh-panel hidden">
-  <i class="fa-solid fa-rotate text-green-700" style="font-size:12px"></i>
-  <span style="font-size:12px;color:#15803d;font-weight:500">Auto-refresh enabled</span>
-  <span class="countdown-timer" id="countdown">5:00</span>
-  <span style="flex:1"></span>
-  <button class="refresh-toggle active" onclick="toggleAutoRefresh()" id="refresh-toggle-btn">
-    <i class="fa-solid fa-pause" style="margin-right:4px"></i>Pause
-  </button>
-</div>
-
-<!-- ── LIVE FETCH BANNER ──────────────────────────────────────────────── -->
 <div id="fetch-banner" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex gap-3 items-start text-sm">
   <i class="fa-solid fa-circle-notch fa-spin text-blue-500 mt-0.5 flex-shrink-0"></i>
   <div>
@@ -131,7 +121,7 @@
 <!-- ── DISCLAIMER ────────────────────────────────────────────────────── -->
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-xs flex gap-2.5">
   <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 flex-shrink-0"></i>
-  <div><strong>Important:</strong> Baseline figures loaded from WHO DON602/DON603, CDC HAN 00530, ECDC (29 May 2026). The app automatically fetches live data at your configured interval. Always verify with primary sources before acting.</div>
+  <div><strong>Important:</strong> This tracker automatically updates in real-time from WHO, ECDC, and CDC sources every 5 minutes. Adjust the interval in Settings. Always verify critical decisions with primary sources before acting.</div>
 </div>
 
 <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
@@ -331,29 +321,22 @@
 <!-- ── SETTINGS MODAL ─────────────────────────────────────────────────── -->
 <div id="settings-modal" class="settings-modal hidden">
   <div class="settings-content">
-    <h3>Auto-refresh settings</h3>
+    <h3>Live tracking settings</h3>
     <div class="settings-item">
       <label for="refresh-interval">Refresh interval (minutes)</label>
       <input type="number" id="refresh-interval" min="1" max="60" value="5">
-      <p style="font-size:11px;color:#6b7280;margin-top:4px">Update every X minutes</p>
+      <p style="font-size:11px;color:#6b7280;margin-top:4px">Updates every X minutes from WHO, ECDC, CDC</p>
     </div>
     <div class="settings-item">
       <label>
         <input type="checkbox" id="enable-notifications" style="margin-right:8px;cursor:pointer">
-        <span style="font-size:13px">Enable browser notifications</span>
+        <span style="font-size:13px">Notify on updates</span>
       </label>
-      <p style="font-size:11px;color:#6b7280;margin-top:4px">Notify when new data is fetched</p>
-    </div>
-    <div class="settings-item">
-      <label>
-        <input type="checkbox" id="auto-start" style="margin-right:8px;cursor:pointer">
-        <span style="font-size:13px">Auto-start on page load</span>
-      </label>
-      <p style="font-size:11px;color:#6b7280;margin-top:4px">Automatically enable auto-refresh</p>
+      <p style="font-size:11px;color:#6b7280;margin-top:4px">Browser notifications when new data arrives</p>
     </div>
     <div class="settings-buttons">
       <button class="btn-save" onclick="saveSettings()">Save</button>
-      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-cancel" onclick="closeSettings()">Close</button>
     </div>
   </div>
 </div>
@@ -487,18 +470,20 @@ let appData = {
   ]
 };
 
-async function fetchLiveData() {
+async function fetchLiveData(silent = false) {
   const btn = document.getElementById('live-btn');
   const banner = document.getElementById('fetch-banner');
   const statusEl = document.getElementById('fetch-status');
   
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating…';
-  banner.classList.remove('hidden');
+  if (!silent) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating…';
+    banner.classList.remove('hidden');
+  }
   
   const statuses = ['Querying WHO…','Checking ECDC…','Consulting CDC…','Compiling data…'];
   let si = 0;
-  const stepInterval = setInterval(()=>{ if(si<statuses.length) statusEl.textContent=statuses[si++]; }, 1200);
+  const stepInterval = setInterval(()=>{ if(si<statuses.length && statusEl) statusEl.textContent=statuses[si++]; }, 1200);
 
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -538,21 +523,20 @@ Search for the latest from WHO, ECDC, CDC. Use baseline if no newer data found.`
       appData = {stats:parsed.stats,areas:parsed.areas,updates:parsed.updates||updatesData,facilities:facilitiesData,sources:sourcesData,mapMarkers:appData.mapMarkers};
       
       const fetchTime = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      document.getElementById('data-freshness').className = 'live-badge';
-      document.getElementById('data-freshness').textContent = '✓ Live';
-      document.getElementById('last-fetch-time').textContent = `Updated ${fetchTime}`;
-      document.getElementById('table-freshness') && (document.getElementById('table-freshness').textContent = `Live — ${fetchTime}`);
+      document.getElementById('last-fetch-time').textContent = `Last updated ${fetchTime}`;
 
       renderStats();
       renderTable();
       renderUpdates();
       if (map) { map.remove(); map = null; initMap(); }
 
-      banner.style.background = '#f0fdf4';
-      banner.style.borderColor = '#86efac';
-      banner.querySelector('i').className = 'fa-solid fa-circle-check text-green-500 mt-0.5 flex-shrink-0';
-      document.querySelector('#fetch-banner strong').textContent = 'Live data loaded successfully';
-      statusEl.textContent = `Updated from ${(parsed.sources||['WHO/ECDC/CDC']).join(', ')} as of ${parsed.dataAsOf || 'today'}.`;
+      if (!silent) {
+        if (banner) banner.style.background = '#f0fdf4';
+        if (banner) banner.style.borderColor = '#86efac';
+        if (banner) banner.querySelector('i').className = 'fa-solid fa-circle-check text-green-500 mt-0.5 flex-shrink-0';
+        if (document.querySelector('#fetch-banner strong')) document.querySelector('#fetch-banner strong').textContent = 'Live data loaded successfully';
+        if (statusEl) statusEl.textContent = `Updated from ${(parsed.sources||['WHO/ECDC/CDC']).join(', ')} as of ${parsed.dataAsOf || 'today'}.`;
+      }
       
       if (autoRefreshEnabled) scheduleNextRefresh();
       
@@ -566,17 +550,23 @@ Search for the latest from WHO, ECDC, CDC. Use baseline if no newer data found.`
     }
   } catch(err) {
     clearInterval(stepInterval);
-    banner.style.background = '#fef2f2';
-    banner.style.borderColor = '#fca5a5';
-    banner.querySelector('i').className = 'fa-solid fa-triangle-exclamation text-red-500 mt-0.5 flex-shrink-0';
-    document.querySelector('#fetch-banner strong').textContent = 'Could not fetch live data';
-    statusEl.textContent = 'Error updating. Baseline figures remain. Check primary sources.';
+    if (!silent && banner) {
+      banner.style.background = '#fef2f2';
+      banner.style.borderColor = '#fca5a5';
+      banner.querySelector('i').className = 'fa-solid fa-triangle-exclamation text-red-500 mt-0.5 flex-shrink-0';
+      document.querySelector('#fetch-banner strong').textContent = 'Could not fetch live data';
+      statusEl.textContent = 'Error updating. Baseline figures remain. Check primary sources.';
+    }
     console.error(err);
   }
 
-  setTimeout(() => banner.classList.add('hidden'), 5000);
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Update Now';
+  if (!silent) {
+    setTimeout(() => { if (banner) banner.classList.add('hidden'); }, 5000);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Update Now';
+    }
+  }
 }
 
 function toggleAutoRefresh() {
@@ -639,9 +629,8 @@ function saveSettings() {
   autoRefreshMinutes = parseInt(document.getElementById('refresh-interval').value) || 5;
   localStorage.setItem('refreshInterval', autoRefreshMinutes);
   localStorage.setItem('enableNotifications', document.getElementById('enable-notifications').checked);
-  localStorage.setItem('autoStart', document.getElementById('auto-start').checked);
   closeSettings();
-  if (autoRefreshEnabled) scheduleNextRefresh();
+  scheduleNextRefresh();
   
   if (document.getElementById('enable-notifications').checked && 'Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
@@ -742,9 +731,9 @@ window.onload = function() {
   
   autoRefreshMinutes = parseInt(localStorage.getItem('refreshInterval')) || 5;
   
-  if (localStorage.getItem('autoStart') === 'true') {
-    setTimeout(() => toggleAutoRefresh(), 1000);
-  }
+  autoRefreshEnabled = true;
+  scheduleNextRefresh();
+  fetchLiveData(true);
 };
 </script>
 </body>
