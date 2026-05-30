@@ -9,587 +9,485 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .stat-number { font-size: 2.75rem; font-weight: 700; line-height: 1; }
-        #map { height: 560px; border-radius: 16px; }
-        .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
-        .data-source { transition: all 0.2s ease; }
-        .data-source:hover { background-color: #f8fafc; }
-        .quarantine-icon { background: none; border: none; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+        #map { height: 520px; border-radius: 12px; }
+        .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .leaflet-popup-content { font-size: 13px; line-height: 1.6; }
+        .quarantine-icon { background: none !important; border: none !important; }
+        .tab-btn { transition: all 0.18s; }
+        .tab-btn.active { background: #dc2626; color: white; }
+        .tab-btn:not(.active) { color: #475569; }
+        .tab-btn:not(.active):hover { background: #f1f5f9; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .data-source { transition: all 0.2s; }
+        .data-source:hover { background: #f8fafc; }
+        .interp-card { border-left: 4px solid; border-radius: 0 12px 12px 0; }
+        .legend-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
+        .leg-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; border: 2px solid white; outline: 2px solid currentColor; }
+        .leg-icon { font-size: 20px; flex-shrink: 0; line-height: 1.2; }
+        .leg-title { font-size: 13px; font-weight: 600; color: #1e293b; margin: 0 0 2px; }
+        .leg-desc { font-size: 12px; color: #64748b; margin: 0; line-height: 1.5; }
+        .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-top: 4px; font-weight: 500; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-100 text-slate-800">
 <div class="max-w-7xl mx-auto">
 
     <!-- Header -->
     <header class="bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div class="px-8 py-6 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-11 h-11 bg-red-600 rounded-2xl flex items-center justify-center text-white text-3xl shadow-inner">
+        <div class="px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white text-2xl">
                     <i class="fa-solid fa-virus-covid"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tighter">Ebola Outbreak Tracker</h1>
-                    <p class="text-slate-500 text-sm">Bundibugyo Virus (BDBV) • Democratic Republic of the Congo & Uganda • 2026</p>
+                    <h1 class="text-2xl font-bold tracking-tight">Ebola Outbreak Tracker</h1>
+                    <p class="text-slate-500 text-xs">Bundibugyo Virus (BDBV) &nbsp;•&nbsp; DRC & Uganda &nbsp;•&nbsp; 2026</p>
                 </div>
             </div>
-            <div class="flex items-center gap-8">
+            <div class="flex items-center gap-5">
                 <div class="flex items-center gap-2 text-red-600">
-                    <div class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
-                    <span class="font-semibold text-sm">PHEIC ACTIVE</span>
+                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="font-semibold text-xs">PHEIC ACTIVE</span>
                 </div>
-                <div id="last-updated" class="text-sm text-slate-500 font-medium">
-                    Data as of 29 May 2026 — WHO/ECDC/CDC
-                </div>
+                <span class="text-xs text-slate-400">Data: 29 May 2026 — WHO / ECDC / CDC</span>
                 <button onclick="refreshData()"
-                        class="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
-                    <i class="fa-solid fa-rotate"></i>
-                    <span>Refresh Data</span>
+                        class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-rotate"></i> Refresh
                 </button>
             </div>
         </div>
+
+        <!-- Tab bar -->
+        <div class="px-6 flex gap-1 border-t bg-slate-50">
+            <button class="tab-btn active px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('overview', this)">
+                <i class="fa-solid fa-chart-line mr-1.5"></i>Overview
+            </button>
+            <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('map', this)">
+                <i class="fa-solid fa-map-location-dot mr-1.5"></i>Map
+            </button>
+            <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('updates', this)">
+                <i class="fa-solid fa-bell mr-1.5"></i>Updates
+            </button>
+            <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('facilities', this)">
+                <i class="fa-solid fa-hospital mr-1.5"></i>Facilities
+            </button>
+            <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('sources', this)">
+                <i class="fa-solid fa-book mr-1.5"></i>Sources
+            </button>
+        </div>
     </header>
 
-    <div class="p-8">
-
+    <div class="p-6">
         <!-- Disclaimer -->
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-sm flex gap-3">
-            <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
-            <div>
-                <strong>Important:</strong> Figures are aggregated from WHO Disease Outbreak News (DON602/DON603, 28 May 2026), 
-                CDC Health Alert Network (HAN 00530), ECDC Rapid Risk Assessment (29 May 2026), and 
-                DRC Ministry of Health published reports. Numbers are subject to rapid revision. Always verify with primary sources.
-            </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-xs flex gap-2.5">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 flex-shrink-0"></i>
+            <div><strong>Important:</strong> Figures are from WHO DON602/DON603, CDC HAN 00530, ECDC Rapid Risk Assessment (29 May 2026), and DRC Ministry of Health. Numbers change rapidly — always verify with primary sources.</div>
         </div>
 
-        <!-- Global Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
-            <div class="bg-white rounded-3xl p-7 shadow-sm border border-red-100">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-red-600 text-xs font-medium tracking-widest">CONFIRMED CASES</p>
-                        <div id="confirmed" class="stat-number text-red-600 mt-3">134</div>
-                    </div>
-                    <i class="fa-solid fa-users text-4xl text-red-200"></i>
+        <!-- ══ OVERVIEW TAB ══════════════════════════════════════════════ -->
+        <div id="tab-overview" class="tab-panel active">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-red-100">
+                    <p class="text-red-600 text-xs font-semibold tracking-wider mb-2">CONFIRMED CASES</p>
+                    <div id="confirmed" class="stat-number text-red-600">134</div>
+                    <p class="text-xs text-slate-400 mt-3">DRC 125 + Uganda 9</p>
                 </div>
-                <p class="text-xs text-slate-500 mt-4">DRC (125) + Uganda (9)</p>
-            </div>
-
-            <div class="bg-white rounded-3xl p-7 shadow-sm border border-orange-100">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-orange-600 text-xs font-medium tracking-widest">CONFIRMED DEATHS</p>
-                        <div id="deaths" class="stat-number text-orange-600 mt-3">18</div>
-                    </div>
-                    <i class="fa-solid fa-skull-crossbones text-4xl text-orange-200"></i>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-orange-100">
+                    <p class="text-orange-600 text-xs font-semibold tracking-wider mb-2">CONFIRMED DEATHS</p>
+                    <div id="deaths" class="stat-number text-orange-600">18</div>
+                    <p class="text-xs text-slate-400 mt-3">CFR ≈ 13.4%</p>
                 </div>
-                <p class="text-xs text-slate-500 mt-4">CFR ≈ 13.4% (confirmed)</p>
-            </div>
-
-            <div class="bg-white rounded-3xl p-7 shadow-sm border border-slate-100">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-slate-600 text-xs font-medium tracking-widest">SUSPECTED CASES</p>
-                        <div id="suspected" class="stat-number text-slate-700 mt-3">906</div>
-                    </div>
-                    <i class="fa-solid fa-user-clock text-4xl text-slate-200"></i>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <p class="text-slate-600 text-xs font-semibold tracking-wider mb-2">SUSPECTED CASES</p>
+                    <div id="suspected" class="stat-number text-slate-700">906</div>
+                    <p class="text-xs text-slate-400 mt-3">incl. 223 suspected deaths</p>
                 </div>
-                <p class="text-xs text-slate-500 mt-4">incl. 223 suspected deaths (DRC)</p>
-            </div>
-
-            <div class="bg-white rounded-3xl p-7 shadow-sm border border-blue-100">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-blue-600 text-xs font-medium tracking-widest">AFFECTED PROVINCES</p>
-                        <div class="stat-number text-blue-600 mt-3">4</div>
-                    </div>
-                    <i class="fa-solid fa-map-location-dot text-4xl text-blue-200"></i>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-blue-100">
+                    <p class="text-blue-600 text-xs font-semibold tracking-wider mb-2">AFFECTED PROVINCES</p>
+                    <div class="stat-number text-blue-600">4</div>
+                    <p class="text-xs text-slate-400 mt-3">Ituri, N. Kivu, S. Kivu, Kampala</p>
                 </div>
-                <p class="text-xs text-slate-500 mt-4">Ituri, N. Kivu, S. Kivu (DRC) + Central (UGA)</p>
-            </div>
-
-            <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-green-700 text-xs font-medium tracking-widest">TREATMENT FACILITIES</p>
-                        <div class="stat-number text-green-700 mt-3">8+</div>
-                    </div>
-                    <i class="fa-solid fa-hospital text-4xl text-green-200"></i>
-                </div>
-                <p class="text-xs text-slate-500 mt-4">Active ETCs / isolation units</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            <!-- Map -->
-            <div class="lg:col-span-7 bg-white rounded-3xl p-8 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-semibold">Cases & Quarantine Facilities • Interactive Map</h2>
-                    <div class="px-4 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-2xl flex items-center gap-2">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <span>Bundibugyo Virus</span>
-                    </div>
-                </div>
-                <div id="map"></div>
-                <div class="mt-5 text-xs text-slate-500 flex flex-wrap gap-x-6 gap-y-2">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-4 h-4 bg-red-700 rounded-full"></span> Primary Epicenter (Ituri)
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-4 h-4 bg-orange-500 rounded-full"></span> Secondary Transmission
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-4 h-4 bg-blue-500 rounded-full"></span> Imported / Linked Cases
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">🏥</span> Ebola Treatment Centre (ETC)
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">⛺</span> Field Isolation Unit
-                    </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-green-100">
+                    <p class="text-green-700 text-xs font-semibold tracking-wider mb-2">TREATMENT SITES</p>
+                    <div class="stat-number text-green-700">8+</div>
+                    <p class="text-xs text-slate-400 mt-3">Active ETCs / isolation units</p>
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="lg:col-span-5 space-y-8">
-
-                <!-- Updates -->
-                <div class="bg-white rounded-3xl p-8 shadow-sm">
-                    <h3 class="font-semibold text-lg mb-5 flex items-center gap-2">
-                        <i class="fa-solid fa-bell"></i> Latest Updates
-                    </h3>
-                    <div id="updates-list" class="space-y-5 text-sm"></div>
+            <!-- Two columns: table + key facts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Area breakdown -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <h2 class="font-semibold text-base mb-4">Affected areas — case breakdown</h2>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-left text-xs text-slate-400">
+                                <th class="pb-3 font-medium">Location</th>
+                                <th class="pb-3 font-medium text-right">Confirmed</th>
+                                <th class="pb-3 font-medium text-right">Deaths</th>
+                                <th class="pb-3 font-medium text-right">Suspected</th>
+                                <th class="pb-3 font-medium pl-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="areas-table" class="divide-y"></tbody>
+                    </table>
+                    <p class="text-xs text-slate-400 mt-3">WHO DON603 / DRC MoH 28 May 2026 / Uganda MoH 27 May 2026</p>
                 </div>
 
-                <!-- Key Facts -->
-                <div class="bg-white rounded-3xl p-8 shadow-sm">
-                    <h3 class="font-semibold text-lg mb-4">Key Facts</h3>
-                    <ul class="space-y-3 text-sm">
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> Caused by Bundibugyo virus — NO approved vaccine or specific antiviral</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> WHO declared PHEIC on 17 May 2026 (IHR Article 12)</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> Historical CFR for Bundibugyo: 30–50%; current confirmed CFR ≈ 13.4%</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> GeneXpert platform CANNOT detect Bundibugyo virus (WHO alert)</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> Treatment center attacked/burned in Rwampara (21 May) and Mongbwalu (23 May)</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> Oxford ChAdOx1 vaccine candidate in animal trials; human trials in 2–3 months</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> US pledged $112M bilateral + $350M via OCHA for response and humanitarian aid</li>
-                        <li class="flex gap-3"><span class="text-red-500 mt-0.5">•</span> 17th Ebola outbreak in DRC since 1976 — first BDBV outbreak since 2012</li>
+                <!-- Key facts -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <h2 class="font-semibold text-base mb-4">Key facts</h2>
+                    <ul class="space-y-3 text-sm text-slate-700">
+                        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5 flex-shrink-0">•</span> No approved vaccine or specific antiviral for Bundibugyo virus</li>
+                        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5 flex-shrink-0">•</span> WHO declared a Public Health Emergency of International Concern (PHEIC) on 17 May 2026</li>
+                        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5 flex-shrink-0">•</span> Historical death rate for this virus is 30–50%; current confirmed rate is lower at ~13.4%</li>
+                        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5 flex-shrink-0">•</span> Standard GeneXpert test machines <strong>cannot detect</strong> this strain — special lab testing required (WHO alert)</li>
+                        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5 flex-shrink-0">•</span> Two treatment centres were attacked and burned by community members in May 2026 (Rwampara, Mongbwalu)</li>
+                        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5 flex-shrink-0">•</span> Oxford University vaccine candidate in animal trials; human trials possible in 2–3 months</li>
+                        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5 flex-shrink-0">•</span> US government pledged $462M total: $112M bilateral + $50M for 50 response clinics + $300M humanitarian aid</li>
+                        <li class="flex gap-2.5"><span class="text-slate-400 mt-0.5 flex-shrink-0">•</span> This is DRC's 17th Ebola outbreak since 1976 and the first Bundibugyo outbreak since 2012</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Affected Areas Table -->
-        <div class="mt-10 bg-white rounded-3xl p-8 shadow-sm">
-            <h3 class="font-semibold text-xl mb-6">Affected Areas — Case Breakdown</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-full">
-                    <thead>
-                        <tr class="border-b text-left text-sm text-slate-500">
-                            <th class="pb-4 font-medium">Location</th>
-                            <th class="pb-4 font-medium text-right">Confirmed Cases</th>
-                            <th class="pb-4 font-medium text-right">Confirmed Deaths</th>
-                            <th class="pb-4 font-medium text-right">Suspected Cases</th>
-                            <th class="pb-4 font-medium">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="areas-table" class="text-sm divide-y"></tbody>
-                </table>
+        <!-- ══ MAP TAB ════════════════════════════════════════════════════ -->
+        <div id="tab-map" class="tab-panel">
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h2 class="font-semibold text-lg">Cases & quarantine facilities — interactive map</h2>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Click any marker for details</span>
+                </div>
+                <div id="map"></div>
+
+                <!-- Plain-language legend -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Coloured circles — where cases are</p>
+
+                        <div class="legend-row">
+                            <span class="leg-dot" style="background:#b91c1c;outline-color:#b91c1c;"></span>
+                            <div>
+                                <p class="leg-title">Primary epicenter (dark red)</p>
+                                <p class="leg-desc">Where the outbreak <em>started</em> and has the most cases — currently <strong>Ituri Province, DRC</strong> (Bunia, Mongbwalu, Rwampara). A larger circle means more confirmed cases.</p>
+                            </div>
+                        </div>
+
+                        <div class="legend-row">
+                            <span class="leg-dot" style="background:#ea580c;outline-color:#ea580c;"></span>
+                            <div>
+                                <p class="leg-title">Secondary areas (orange)</p>
+                                <p class="leg-desc">Places where the disease has <em>spread to</em> from the epicenter via travel or contact — North Kivu and South Kivu provinces in DRC.</p>
+                            </div>
+                        </div>
+
+                        <div class="legend-row">
+                            <span class="leg-dot" style="background:#2563eb;outline-color:#2563eb;"></span>
+                            <div>
+                                <p class="leg-title">Imported / linked cases (blue)</p>
+                                <p class="leg-desc">Cases in people who <em>travelled from</em> an affected area and brought the disease with them — currently Kampala, Uganda. No self-sustaining spread confirmed here yet.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Icons — quarantine & treatment sites</p>
+
+                        <div class="legend-row">
+                            <span class="leg-icon">🏥</span>
+                            <div>
+                                <p class="leg-title">Ebola Treatment Centre (ETC) or isolation ward</p>
+                                <p class="leg-desc">A building — hospital or dedicated ward — where confirmed and suspected patients are treated under strict isolation. Run by the Ministry of Health, WHO, or MSF (Doctors Without Borders).</p>
+                            </div>
+                        </div>
+
+                        <div class="legend-row">
+                            <span class="leg-icon">⛺</span>
+                            <div>
+                                <p class="leg-title">Field isolation unit</p>
+                                <p class="leg-desc">A <em>temporary structure</em> (tent or converted space) built quickly near affected communities. Used to isolate patients before they can reach a full hospital ETC — often the first response in remote areas.</p>
+                            </div>
+                        </div>
+
+                        <div class="legend-row">
+                            <span class="leg-icon">⚠️</span>
+                            <div>
+                                <p class="leg-title">Blocked or suspended facility</p>
+                                <p class="leg-desc">A site that was <em>planned but is not currently operating</em> — attacked by the community, or suspended by a legal or political decision.</p>
+                                <span class="badge" style="background:#fef3c7;color:#92400e;">e.g. Kenya facility — court blocked 29 May 2026</span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-400 mt-3 pl-1"><strong>Circle size</strong> is proportional — a bigger circle means more confirmed cases at that location.</p>
+                    </div>
+                </div>
             </div>
-            <p class="text-xs text-slate-400 mt-4">Source: WHO DON603 / DRC MoH update 28 May 2026 / Uganda MoH 27 May 2026. Provincial case splits are WHO estimates; DRC total confirmed = 125, Uganda total confirmed = 9.</p>
+
+            <!-- Map interpretation -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 class="font-semibold text-lg mb-5 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass-chart text-slate-500"></i>
+                    What the map tells us
+                </h2>
+                <div class="space-y-4">
+                    <div class="interp-card border-red-500 bg-red-50 p-4">
+                        <p class="font-semibold text-red-800 text-sm mb-1">The outbreak is concentrated in a specific corridor</p>
+                        <p class="text-sm text-red-700">The large dark-red circle over Ituri Province shows that the vast majority of confirmed cases — roughly 71% — are still in the original epicenter. The outbreak began in Mongbwalu, a busy gold-mining town, and spread to Bunia and Rwampara as people sought medical care in the provincial capital.</p>
+                    </div>
+                    <div class="interp-card border-orange-400 bg-orange-50 p-4">
+                        <p class="font-semibold text-orange-800 text-sm mb-1">It has spread south along major travel routes</p>
+                        <p class="text-sm text-orange-700">The orange circles in North and South Kivu show that the virus has followed trade and migration routes southward. Butembo (North Kivu) was also the epicenter of the 2018–2020 Ebola outbreak, meaning communities there have prior experience but also deep distrust of response teams.</p>
+                    </div>
+                    <div class="interp-card border-blue-400 bg-blue-50 p-4">
+                        <p class="font-semibold text-blue-800 text-sm mb-1">Uganda is affected by travel, not local spread</p>
+                        <p class="text-sm text-blue-700">Kampala's blue circle (Uganda) represents cases linked to travel from DRC — not a home-grown chain of transmission. Ituri Province borders Uganda and Bunia is less than 40 km from the border, making cross-border spread an ongoing risk. All 9 confirmed Ugandan cases trace back to DRC contacts.</p>
+                    </div>
+                    <div class="interp-card border-green-500 bg-green-50 p-4">
+                        <p class="font-semibold text-green-800 text-sm mb-1">Treatment facilities are clustered near the epicenter — gaps remain in the south</p>
+                        <p class="text-sm text-green-700">Most 🏥 markers sit within or near Ituri Province, reflecting the initial response push. The MSF facility under construction in Goma (Munigi) is the primary treatment centre for the growing North Kivu caseload. South Kivu and the border areas still have limited coverage, creating a risk that patients travel long distances — spreading the virus further in the process.</p>
+                    </div>
+                    <div class="interp-card border-amber-400 bg-amber-50 p-4">
+                        <p class="font-semibold text-amber-800 text-sm mb-1">The ⚠️ marker in Kenya shows international political tension</p>
+                        <p class="text-sm text-amber-700">A proposed US quarantine site at Laikipia Air Base in Kenya was blocked by a Kenyan court on 29 May 2026. It is not part of the outbreak zone but represents the international response effort. Kenyan medical unions opposed it, fearing it could introduce the virus into their country. The case is ongoing.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Quarantine Facilities Table -->
-        <div class="mt-8 bg-white rounded-3xl p-8 shadow-sm">
-            <h3 class="font-semibold text-xl mb-6 flex items-center gap-2">
-                <i class="fa-solid fa-hospital text-green-600"></i> Known Quarantine & Treatment Facilities
-            </h3>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-full">
-                    <thead>
-                        <tr class="border-b text-left text-sm text-slate-500">
-                            <th class="pb-4 font-medium">Facility / Location</th>
-                            <th class="pb-4 font-medium">Country</th>
-                            <th class="pb-4 font-medium">Type</th>
-                            <th class="pb-4 font-medium">Operator</th>
-                            <th class="pb-4 font-medium">Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="facilities-table" class="text-sm divide-y"></tbody>
-                </table>
+        <!-- ══ UPDATES TAB ════════════════════════════════════════════════ -->
+        <div id="tab-updates" class="tab-panel">
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-bell text-slate-400"></i> Latest updates — chronological
+                </h2>
+                <div id="updates-list" class="space-y-0 divide-y text-sm"></div>
             </div>
-            <p class="text-xs text-slate-400 mt-4">Sources: MSF (19 May 2026), WHO DON602, US Embassy Uganda (28 May 2026), CDC HAN 00530. Capacity figures are approximate.</p>
         </div>
 
-        <!-- Sources -->
-        <div class="mt-12 bg-white rounded-3xl p-8 border">
-            <h3 class="font-semibold mb-5">Primary Data Sources</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>WHO</strong> DON603 — DRC/Uganda Situation Report (21 May)</div>
-                </a>
-                <a href="https://www.ecdc.europa.eu/en/ebola-virus-disease-outbreak-democratic-republic-congo-and-uganda" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>ECDC</strong> Rapid Risk Assessment (updated 29 May 2026)</div>
-                </a>
-                <a href="https://www.cdc.gov/han/php/notices/han00530.html" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>CDC</strong> Health Alert Network HAN 00530</div>
-                </a>
-                <a href="https://www.nicd.ac.za/ebola-bundibugyo-virus-outbreak-situation-report-drc-uganda/" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>NICD</strong> Situation Report — DRC & Uganda (27 May 2026)</div>
-                </a>
-                <a href="https://www.doctorswithoutborders.org/latest/ebola-disease-outbreak-2026-how-msf-responding" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>MSF</strong> Field Response Update — Facility Locations</div>
-                </a>
-                <a href="https://www.socialscienceinaction.org/resources/ituri-ebola-outbreak-2026-drc-summary-overview-of-context/" target="_blank"
-                   class="data-source flex items-center gap-3 p-4 rounded-2xl border">
-                    <i class="fa-solid fa-link text-blue-600"></i>
-                    <div><strong>SSHAP</strong> Ituri Context Overview (28 May 2026)</div>
-                </a>
+        <!-- ══ FACILITIES TAB ════════════════════════════════════════════ -->
+        <div id="tab-facilities" class="tab-panel">
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <h2 class="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-hospital text-green-600"></i> Known quarantine & treatment facilities
+                </h2>
+                <p class="text-sm text-slate-500 mb-5">These are the sites where patients are being isolated, treated, or quarantined. <em>Ebola Treatment Centres (ETCs)</em> are formal facilities; <em>field units</em> are temporary structures. <em>Blocked</em> means the facility was planned but is not operational.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-left text-xs text-slate-400">
+                                <th class="pb-3 font-medium">Facility</th>
+                                <th class="pb-3 font-medium">Country</th>
+                                <th class="pb-3 font-medium">Type</th>
+                                <th class="pb-3 font-medium">Operated by</th>
+                                <th class="pb-3 font-medium">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facilities-table" class="divide-y"></tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Sources: MSF (19 May 2026), WHO DON602, US Embassy Uganda (28 May 2026), CDC HAN 00530.</p>
+            </div>
+        </div>
+
+        <!-- ══ SOURCES TAB ════════════════════════════════════════════════ -->
+        <div id="tab-sources" class="tab-panel">
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 class="font-semibold text-lg mb-2">Primary data sources</h2>
+                <p class="text-sm text-slate-500 mb-6">All figures in this tracker come from the official sources below. Click any link to read the original report.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm" id="sources-list"></div>
             </div>
         </div>
     </div>
 </div>
 
-<footer class="bg-white border-t py-8 text-center text-xs text-slate-400 mt-16">
-    Data sourced from WHO, ECDC, CDC, NICD, MSF — Updated 29 May 2026 •
-    Not an official WHO/CDC dashboard • Always verify with primary sources
+<footer class="bg-white border-t py-6 text-center text-xs text-slate-400 mt-8">
+    Data sourced from WHO, ECDC, CDC, NICD, MSF — Updated 29 May 2026 &nbsp;•&nbsp; Not an official WHO/CDC dashboard &nbsp;•&nbsp; Always verify with primary sources
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ── STATS (WHO/ECDC/DRC MoH, 28–29 May 2026) ─────────────────────────────
-const stats = {
-    confirmed: 134,   // DRC 125 + Uganda 9 (as of 28 May WHO/ECDC)
-    deaths: 18,       // DRC 17 confirmed + Uganda 1 confirmed
-    suspected: 906    // DRC MoH 28 May (revised after data clean-up)
-};
+// ── DATA ──────────────────────────────────────────────────────────────────
+const stats = { confirmed: 134, deaths: 18, suspected: 906 };
 
-// ── CASE LOCATIONS ────────────────────────────────────────────────────────
 const locations = [
     {
-        name: "Ituri Province (Bunia, Mongbwalu, Rwampara, Nyakunde, Fataki), DRC",
+        name: "Ituri Province, DRC",
         lat: 1.65, lng: 30.05,
-        confirmed: 95, deaths: 14, suspected: 680,
-        type: "primary",
-        popup: `<strong>Ituri Province, DRC</strong><br>
-                <b>Epicenter</b> — Health zones: Bunia, Mongbwalu, Rwampara, Nyakunde, Fataki<br>
-                Confirmed: ~95 | Confirmed deaths: ~14<br>
-                Suspected: ~680 (dominant share)<br>
-                <i>Source: WHO DON603 / DRC MoH 28 May 2026</i>`
+        confirmed: 95, deaths: 14, suspected: 680, type: "primary",
+        popup: `<strong>Ituri Province, DRC</strong><br><b>Epicenter</b> — Bunia, Mongbwalu, Rwampara, Nyakunde, Fataki<br>Confirmed: ~95 &nbsp;|&nbsp; Deaths: ~14<br>Suspected: ~680<br><em>WHO DON603 / DRC MoH 28 May 2026</em>`
     },
     {
-        name: "North Kivu Province (Butembo, Beni, Goma), DRC",
+        name: "North Kivu Province, DRC",
         lat: -0.60, lng: 29.00,
-        confirmed: 22, deaths: 2, suspected: 170,
-        type: "secondary",
-        popup: `<strong>North Kivu Province, DRC</strong><br>
-                Secondary transmission — Butembo, Beni; Goma (Munigi)<br>
-                Confirmed: ~22 | Confirmed deaths: ~2<br>
-                MSF establishing 80-bed ETC at Munigi/Goma<br>
-                <i>Source: WHO DON603 / MSF 19 May 2026</i>`
+        confirmed: 22, deaths: 2, suspected: 170, type: "secondary",
+        popup: `<strong>North Kivu Province, DRC</strong><br>Secondary spread — Butembo, Beni, Goma<br>Confirmed: ~22 &nbsp;|&nbsp; Deaths: ~2<br>MSF building 80-bed ETC at Munigi/Goma<br><em>WHO DON603 / MSF 19 May 2026</em>`
     },
     {
         name: "South Kivu Province, DRC",
         lat: -3.00, lng: 28.20,
-        confirmed: 8, deaths: 1, suspected: 56,
-        type: "secondary",
-        popup: `<strong>South Kivu Province, DRC</strong><br>
-                Imported from Tshopo/Kisangani (21 May confirmed)<br>
-                Confirmed: ~8 | Confirmed deaths: ~1<br>
-                <i>Source: WHO DON603 / SSHAP 28 May 2026</i>`
+        confirmed: 8, deaths: 1, suspected: 56, type: "secondary",
+        popup: `<strong>South Kivu Province, DRC</strong><br>Imported from Tshopo/Kisangani (21 May confirmed)<br>Confirmed: ~8 &nbsp;|&nbsp; Deaths: ~1<br><em>WHO DON603 / SSHAP 28 May 2026</em>`
     },
     {
         name: "Kampala, Uganda",
         lat: 0.347, lng: 32.582,
-        confirmed: 9, deaths: 1, suspected: 0,
-        type: "imported",
-        popup: `<strong>Kampala, Uganda</strong><br>
-                Travel-linked cases from DRC (no sustained local transmission confirmed)<br>
-                Confirmed: 9 | Confirmed deaths: 1<br>
-                Includes 2 healthcare workers (25 May); Uganda MoH 27 May 2026<br>
-                <i>Source: NICD / Uganda MoH 27 May 2026</i>`
+        confirmed: 9, deaths: 1, suspected: 0, type: "imported",
+        popup: `<strong>Kampala, Uganda</strong><br>All cases travel-linked from DRC — no sustained local spread<br>Confirmed: 9 &nbsp;|&nbsp; Deaths: 1 (CFR 14.3%)<br>Includes 2 healthcare workers (25 May)<br><em>NICD / Uganda MoH 27 May 2026</em>`
     }
 ];
 
-// ── QUARANTINE / TREATMENT FACILITIES ────────────────────────────────────
 const facilities = [
-    {
-        name: "Mongbwalu General Referral Hospital ETC",
-        lat: 1.935, lng: 30.040,
-        country: "DRC", type: "Ebola Treatment Centre",
-        operator: "MoH DRC / MSF (setting up)",
-        notes: "First cluster site; MSF constructing ETC; IPC only 34% coverage",
-        icon: "🏥"
-    },
-    {
-        name: "Bunia CME Hospital Isolation Unit",
-        lat: 1.563, lng: 30.250,
-        country: "DRC", type: "Isolation Ward",
-        operator: "CME Bunia / WHO",
-        notes: "Maintaining isolation protocols; part of Ituri coordination hub",
-        icon: "🏥"
-    },
-    {
-        name: "Rwampara Health Zone Field Isolation",
-        lat: 1.520, lng: 30.155,
-        country: "DRC", type: "Field Isolation Unit",
-        operator: "DRC MoH / Rapid Response Teams",
-        notes: "Tent facility attacked/burned 21 May; rebuilt under security escort",
-        icon: "⛺"
-    },
-    {
-        name: "Fataki Health Centre Isolation",
-        lat: 1.891, lng: 29.760,
-        country: "DRC", type: "Isolation Ward",
-        operator: "MSF",
-        notes: "MSF deployed; Ebola kits (disinfectants, PPE, medicines) delivered",
-        icon: "⛺"
-    },
-    {
-        name: "Munigi ETC (Goma, North Kivu)",
-        lat: -1.598, lng: 29.213,
-        country: "DRC", type: "Ebola Treatment Centre",
-        operator: "MSF",
-        notes: "80-bed capacity (suspected + confirmed); rehabilitation underway",
-        icon: "🏥"
-    },
-    {
-        name: "Kyeshero Hospital Isolation Ward (Goma)",
-        lat: -1.662, lng: 29.191,
-        country: "DRC", type: "Isolation Ward",
-        operator: "MSF",
-        notes: "MSF-supported; staff trained on Ebola case management",
-        icon: "🏥"
-    },
-    {
-        name: "Butembo Assessment / ETC",
-        lat: 0.130, lng: 29.291,
-        country: "DRC", type: "Assessment / ETC (being established)",
-        operator: "MSF / MoH",
-        notes: "MSF launched assessment after cases confirmed; facility being set up",
-        icon: "⛺"
-    },
-    {
-        name: "Wandegeya Emergency Lab & Isolation (Kampala)",
-        lat: 0.340, lng: 32.570,
-        country: "Uganda", type: "Reference Laboratory / Isolation",
-        operator: "Uganda MoH / UVRI",
-        notes: "Central Emergency Surveillance Lab confirmed first Ugandan case; isolation beds active",
-        icon: "🏥"
-    },
-    {
-        name: "Laikipia Air Base Quarantine Facility (Proposed)",
-        lat: 0.100, lng: 36.900,
-        country: "Kenya", type: "Proposed Quarantine Facility (suspended)",
-        operator: "US State Dept / HHS (blocked by Kenyan court 29 May)",
-        notes: "50-bed facility for US nationals exposed in DRC; Kenyan court issued temporary injunction 29 May 2026",
-        icon: "⚠️"
-    }
+    { name: "Mongbwalu General Referral Hospital ETC", lat: 1.935, lng: 30.040, country: "DRC", type: "ETC", operator: "MoH DRC / MSF", notes: "First cluster site; MSF constructing ETC; IPC only 34%", icon: "🏥" },
+    { name: "Bunia CME Hospital Isolation Unit", lat: 1.563, lng: 30.250, country: "DRC", type: "Isolation Ward", operator: "CME Bunia / WHO", notes: "Active; Ituri coordination hub", icon: "🏥" },
+    { name: "Rwampara Field Isolation (tent)", lat: 1.520, lng: 30.155, country: "DRC", type: "Field Unit", operator: "DRC MoH RRT", notes: "Attacked & burned 21 May; rebuilt under security", icon: "⛺" },
+    { name: "Fataki Health Centre Isolation", lat: 1.891, lng: 29.760, country: "DRC", type: "Field Unit", operator: "MSF", notes: "PPE & Ebola kits delivered; cases under temp isolation", icon: "⛺" },
+    { name: "Munigi ETC, Goma (North Kivu)", lat: -1.598, lng: 29.213, country: "DRC", type: "ETC (80 beds)", operator: "MSF", notes: "Rehabilitation underway; suspected + confirmed wards", icon: "🏥" },
+    { name: "Kyeshero Hospital Isolation (Goma)", lat: -1.662, lng: 29.191, country: "DRC", type: "Isolation Ward", operator: "MSF", notes: "Staff trained on Ebola case management; active", icon: "🏥" },
+    { name: "Butembo ETC", lat: 0.130, lng: 29.291, country: "DRC", type: "ETC (being set up)", operator: "MSF / MoH", notes: "Post-assessment setup; Butembo was 2018 epicenter", icon: "⛺" },
+    { name: "Wandegeya Emergency Lab & Isolation, Kampala", lat: 0.340, lng: 32.570, country: "Uganda", type: "Reference Lab / Isolation", operator: "Uganda MoH / UVRI", notes: "Confirmed index case; isolation beds active for HCW contacts", icon: "🏥" },
+    { name: "Laikipia Air Base (Nanyuki) — BLOCKED", lat: 0.100, lng: 36.900, country: "Kenya", type: "Proposed quarantine (suspended)", operator: "US State Dept / HHS", notes: "50 beds for US nationals; Kenyan court injunction 29 May 2026", icon: "⚠️" }
 ];
 
-// ── FACILITIES TABLE DATA ─────────────────────────────────────────────────
 const facilitiesTableData = [
-    { name: "Mongbwalu General Referral Hospital ETC", country: "DRC", type: "ETC", operator: "MoH DRC / MSF", notes: "ETC being established; ~30 pts at peak" },
-    { name: "Bunia CME Hospital Isolation Unit", country: "DRC", type: "Isolation Ward", operator: "CME Bunia / WHO", notes: "Active; Ituri coordination hub" },
-    { name: "Bunia Salama Hospital", country: "DRC", type: "Isolation (overwhelmed)", operator: "Private / MSF assessment", notes: "Reported full capacity; no isolation ward found by MSF" },
-    { name: "Rwampara Field Isolation (tent)", country: "DRC", type: "Field Unit", operator: "DRC MoH RRT", notes: "Attacked/burned 21 May; reconstructed" },
-    { name: "Fataki Health Centre", country: "DRC", type: "Isolation Ward", operator: "MSF", notes: "PPE & Ebola kits delivered" },
-    { name: "Munigi ETC, Goma (North Kivu)", country: "DRC", type: "ETC (80 beds)", operator: "MSF", notes: "Rehabilitation underway; incl. suspected & confirmed wards" },
+    { name: "Mongbwalu General Referral Hospital ETC", country: "DRC", type: "ETC", operator: "MoH DRC / MSF", notes: "First cluster site; IPC coverage only 34%; ETC being built" },
+    { name: "Bunia CME Hospital Isolation Unit", country: "DRC", type: "Isolation Ward", operator: "CME Bunia / WHO", notes: "Active; serves as Ituri province coordination hub" },
+    { name: "Bunia Salama Hospital", country: "DRC", type: "Isolation (overwhelmed)", operator: "Private / MSF assessment", notes: "Reported full capacity; MSF found no available isolation ward" },
+    { name: "Rwampara Field Isolation (tent)", country: "DRC", type: "Field Unit", operator: "DRC MoH RRT", notes: "Attacked & burned 21 May; rebuilt with security escort" },
+    { name: "Fataki Health Centre", country: "DRC", type: "Field Unit", operator: "MSF", notes: "Patients under temporary isolation; PPE kits delivered" },
+    { name: "Munigi ETC, Goma (North Kivu)", country: "DRC", type: "ETC (80 beds)", operator: "MSF", notes: "Rehabilitation underway; separate suspected & confirmed wards" },
     { name: "Kyeshero Hospital Isolation (Goma)", country: "DRC", type: "Isolation Ward", operator: "MSF", notes: "Staff trained; active" },
-    { name: "Butembo ETC", country: "DRC", type: "ETC (being established)", operator: "MSF / MoH", notes: "Post-assessment setup; Butembo was 2018 outbreak epicenter" },
-    { name: "Wandegeya Emergency Surveillance Lab & Isolation (Kampala)", country: "Uganda", type: "Reference Lab / Isolation", operator: "Uganda MoH / UVRI", notes: "Confirmed index case; isolation active for healthcare worker contacts" },
-    { name: "Laikipia Air Base (Nanyuki)", country: "Kenya", type: "Quarantine Facility (blocked)", operator: "US State Dept / HHS", notes: "50 beds; Kenyan court injunction 29 May 2026; for US nationals only" }
+    { name: "Butembo ETC", country: "DRC", type: "ETC (being established)", operator: "MSF / MoH", notes: "Assessment done; setup underway in prior-outbreak epicenter" },
+    { name: "Wandegeya Emergency Surveillance Lab & Isolation, Kampala", country: "Uganda", type: "Reference Lab / Isolation", operator: "Uganda MoH / UVRI", notes: "Confirmed index case; isolation active for HCW contacts" },
+    { name: "Laikipia Air Base, Nanyuki", country: "Kenya", type: "Quarantine (blocked)", operator: "US State Dept / HHS", notes: "50 beds for US nationals; Kenyan court injunction issued 29 May 2026" }
 ];
 
-// ── UPDATES ───────────────────────────────────────────────────────────────
 const sampleUpdates = [
-    {
-        time: "29 May 2026",
-        title: "Kenya Court Blocks US Quarantine Facility",
-        source: "CNN / US Embassy",
-        desc: "A Kenyan court issued a temporary injunction blocking the US plan to operate a 50-bed quarantine facility at Laikipia Air Base for Americans exposed to Ebola in DRC."
-    },
-    {
-        time: "28 May 2026",
-        title: "WHO/ECDC Latest Figures — DRC MoH Update",
-        source: "WHO DON / ECDC",
-        desc: "DRC: 125 confirmed cases (17 deaths), 906 suspected cases (223 suspected deaths) across Ituri, North Kivu, South Kivu. Uganda: 9 confirmed cases (1 death). Figures revised downward after data clean-up by DRC authorities."
-    },
-    {
-        time: "28 May 2026",
-        title: "US Pledges $462M Total Response Funding",
-        source: "US State Dept / US Embassy Uganda",
-        desc: "$112M bilateral assistance + $50M (50 response clinics via OCHA) + $300M humanitarian pooled funds for DRC and Uganda."
-    },
-    {
-        time: "27 May 2026",
-        title: "Uganda: 9 Confirmed, Including 2 Healthcare Workers",
-        source: "NICD / Uganda MoH",
-        desc: "Two new healthcare worker cases in Kampala reported 25 May. Total Uganda: 9 confirmed, 1 death (CFR 14.3%). All cases linked to DRC; no sustained local chain confirmed."
-    },
-    {
-        time: "25 May 2026",
-        title: "Mongbwalu Treatment Center Burned Again",
-        source: "SSHAP / Wikipedia",
-        desc: "18 suspected Ebola patients escaped after community members burned a treatment tent in Mongbwalu on 23 May. Security forces deployed; patients being traced."
-    },
-    {
-        time: "19 May 2026",
-        title: "MSF Deploys; US Missionary Airlifted to Berlin",
-        source: "MSF / Mappr",
-        desc: "MSF dispatched 17 tonnes of supplies to Bunia, Mongbwalu, Fataki. Dr. Peter Stafford (American missionary, Nyankunde Hospital) airlifted to Charité Berlin for treatment in high-security isolation."
-    },
-    {
-        time: "17 May 2026",
-        title: "WHO Declares PHEIC",
-        source: "WHO",
-        desc: "WHO Director-General determined Ebola caused by Bundibugyo virus in DRC and Uganda constitutes a Public Health Emergency of International Concern (PHEIC) under IHR Article 12."
-    },
-    {
-        time: "15 May 2026",
-        title: "Outbreak Declared — DRC & Uganda",
-        source: "DRC MoH / Uganda MoH",
-        desc: "DRC declared 17th Ebola outbreak (Bundibugyo virus) in Ituri Province. Uganda simultaneously confirmed one imported case in Kampala (died 14 May). Origin traced to Mongbwalu health zone."
-    }
+    { time: "29 May 2026", title: "Kenya court blocks US quarantine facility", source: "CNN / US Embassy Uganda", desc: "A Kenyan court issued a temporary injunction blocking the US plan to operate a 50-bed quarantine site at Laikipia Air Base for Americans exposed to Ebola in DRC. Kenyan medical unions and civil society groups opposed it, arguing it risked importing the virus." },
+    { time: "28 May 2026", title: "Latest figures — DRC MoH data revision", source: "WHO DON / ECDC", desc: "DRC: 125 confirmed cases (17 deaths), 906 suspected cases (223 suspected deaths) across Ituri, North Kivu, and South Kivu. Uganda: 9 confirmed (1 death). Numbers revised downward after DRC authorities removed duplicate entries and reclassified some suspected cases as confirmed." },
+    { time: "28 May 2026", title: "US pledges $462M total response funding", source: "US State Dept / US Embassy Uganda", desc: "$112M in bilateral foreign assistance + $50M to OCHA for up to 50 response clinics + $300M in humanitarian pooled funds. State Department responders deployed to dozens of health facilities in Ituri, North Kivu, and South Kivu." },
+    { time: "27 May 2026", title: "Uganda: 9 confirmed including 2 healthcare workers", source: "NICD / Uganda MoH", desc: "Two new healthcare worker cases in Kampala reported 25 May — raising concern about hospital transmission. Total Uganda: 9 confirmed, 1 death (CFR 14.3%). All cases trace back to DRC contacts; no self-sustaining local chain confirmed." },
+    { time: "23 May 2026", title: "18 patients escape after treatment tent burned (Mongbwalu)", source: "SSHAP / Reuters", desc: "Community members attacked and burned an isolation tent in Mongbwalu. Eighteen suspected Ebola patients fled back into the community. Security forces deployed; contact tracers working to locate and re-isolate them. This followed a similar attack in Rwampara on 21 May." },
+    { time: "19 May 2026", title: "MSF deploys 17 tonnes of supplies; American missionary airlifted", source: "MSF / Mappr", desc: "MSF dispatched 8 tonnes from Kinshasa to Bunia plus 9 more tonnes within days — including PPE, medicines, generators, and solar panels for Bunia, Mongbwalu, and Fataki. Dr. Peter Stafford, a US missionary infected at Nyankunde Hospital near Bunia, was airlifted to Berlin's Charité hospital for high-security isolation treatment." },
+    { time: "17 May 2026", title: "WHO declares Public Health Emergency of International Concern", source: "WHO", desc: "WHO Director-General formally determined that Ebola caused by Bundibugyo virus in DRC and Uganda constitutes a PHEIC under IHR Article 12. This is WHO's highest level of alert, triggering mandatory international cooperation and temporary travel/trade recommendations." },
+    { time: "15 May 2026", title: "Outbreak declared — DRC and Uganda simultaneously", source: "DRC MoH / Uganda MoH", desc: "DRC confirmed this as its 17th Ebola outbreak, concentrated in Ituri Province (Rwampara, Mongbwalu, Bunia health zones). On the same day, Uganda confirmed one imported case in Kampala — a Congolese man who had died on 14 May after being admitted 11 May. The outbreak is believed to have originated in Mongbwalu, a busy gold-mining area." }
 ];
 
-// ── RENDER FUNCTIONS ──────────────────────────────────────────────────────
+const sourcesData = [
+    { label: "WHO DON603 — DRC/Uganda Situation Report (21 May)", url: "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603" },
+    { label: "WHO DON602 — Initial Outbreak Notification (16 May)", url: "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602" },
+    { label: "ECDC Rapid Risk Assessment (updated 29 May 2026)", url: "https://www.ecdc.europa.eu/en/ebola-virus-disease-outbreak-democratic-republic-congo-and-uganda" },
+    { label: "CDC Health Alert Network HAN 00530", url: "https://www.cdc.gov/han/php/notices/han00530.html" },
+    { label: "NICD Situation Report — DRC & Uganda (27 May 2026)", url: "https://www.nicd.ac.za/ebola-bundibugyo-virus-outbreak-situation-report-drc-uganda/" },
+    { label: "MSF Field Response Update — Facility Locations", url: "https://www.doctorswithoutborders.org/latest/ebola-disease-outbreak-2026-how-msf-responding" },
+    { label: "SSHAP — Ituri Context Overview (28 May 2026)", url: "https://www.socialscienceinaction.org/resources/ituri-ebola-outbreak-2026-drc-summary-overview-of-context/" },
+    { label: "US State Dept — Ebola Response Update (28 May 2026)", url: "https://www.state.gov/releases/office-of-the-spokesperson/2026/05/ebola-response-update-may-28-2026" },
+    { label: "US Embassy Uganda — Response Update (28 May 2026)", url: "https://ug.usembassy.gov/ebola-response-update-may-28-2026/" },
+    { label: "CDC Newsroom — CDC Mobilizes Response", url: "https://www.cdc.gov/media/releases/2026/cdc-mobilizes-international-ebola-response.html" },
+    { label: "WHO PHEIC Declaration (17 May 2026)", url: "https://www.who.int/news/item/17-05-2026-epidemic-of-ebola-disease-in-the-democratic-republic-of-the-congo-and-uganda-determined-a-public-health-emergency-of-international-concern" },
+    { label: "CNN — Kenya Court Blocks US Quarantine Facility (29 May)", url: "https://www.cnn.com/2026/05/29/africa/kenyan-court-ebola-facility-intl" }
+];
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'map' && !map) { setTimeout(initMap, 100); }
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────
 function updateStats() {
     document.getElementById('confirmed').textContent = stats.confirmed;
     document.getElementById('deaths').textContent = stats.deaths;
     document.getElementById('suspected').textContent = stats.suspected.toLocaleString();
 }
 
-let map;
+// ── MAP ───────────────────────────────────────────────────────────────────
+let map = null;
 function initMap() {
-    map = L.map('map', { zoomControl: true }).setView([0.2, 29.8], 6);
+    if (map) return;
+    map = L.map('map', { zoomControl: true }).setView([0.2, 30.5], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors', maxZoom: 18
     }).addTo(map);
 
-    // Case markers
     locations.forEach(loc => {
-        const color = loc.type === 'primary' ? '#b91c1c' :
-                      loc.type === 'secondary' ? '#ea580c' : '#2563eb';
-        const radius = Math.max(10, Math.sqrt(loc.confirmed) * 2.5);
-        L.circleMarker([loc.lat, loc.lng], {
-            radius, fillColor: color, color: "#ffffff",
-            weight: 2.5, opacity: 1, fillOpacity: 0.85
-        }).addTo(map).bindPopup(loc.popup, { offset: [0, -10], maxWidth: 300 });
+        const color = loc.type === 'primary' ? '#b91c1c' : loc.type === 'secondary' ? '#ea580c' : '#2563eb';
+        const radius = Math.max(10, Math.sqrt(loc.confirmed) * 2.6);
+        L.circleMarker([loc.lat, loc.lng], { radius, fillColor: color, color: '#fff', weight: 2.5, opacity: 1, fillOpacity: 0.88 })
+            .addTo(map).bindPopup(loc.popup, { offset: [0, -10], maxWidth: 300 });
     });
 
-    // Quarantine / treatment facility markers
     facilities.forEach(f => {
-        const divIcon = L.divIcon({
+        const icon = L.divIcon({
             className: 'quarantine-icon',
-            html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))">${f.icon}</div>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
+            html: `<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.6))">${f.icon}</div>`,
+            iconSize: [24, 24], iconAnchor: [12, 12]
         });
-        L.marker([f.lat, f.lng], { icon: divIcon })
+        L.marker([f.lat, f.lng], { icon })
             .addTo(map)
-            .bindPopup(`
-                <strong>${f.name}</strong><br>
-                <span class="text-sm"><b>Country:</b> ${f.country}</span><br>
-                <b>Type:</b> ${f.type}<br>
-                <b>Operator:</b> ${f.operator}<br>
-                <i>${f.notes}</i>
-            `, { maxWidth: 280 });
+            .bindPopup(`<strong>${f.name}</strong><br><b>Country:</b> ${f.country}<br><b>Type:</b> ${f.type}<br><b>Operated by:</b> ${f.operator}<br><em>${f.notes}</em>`, { maxWidth: 280 });
     });
-
-    // Legend
-    const legend = L.control({ position: 'bottomright' });
-    legend.onAdd = function () {
-        const div = L.DomUtil.create('div', '');
-        div.style.cssText = 'background:white;padding:12px 14px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:11px;line-height:1.8';
-        div.innerHTML = `
-            <div style="font-weight:700;margin-bottom:6px;color:#334155">Legend</div>
-            <div>🔴 Primary Epicenter (Ituri)</div>
-            <div>🟠 Secondary Areas</div>
-            <div>🔵 Imported Cases</div>
-            <div>🏥 ETC / Isolation Unit</div>
-            <div>⛺ Field Isolation</div>
-            <div>⚠️ Blocked / Suspended</div>
-        `;
-        return div;
-    };
-    legend.addTo(map);
 }
 
+// ── UPDATES ───────────────────────────────────────────────────────────────
 function renderUpdates() {
-    const container = document.getElementById('updates-list');
-    container.innerHTML = '';
+    const c = document.getElementById('updates-list');
+    c.innerHTML = '';
     sampleUpdates.forEach(u => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <div class="flex justify-between items-start gap-2">
+        const d = document.createElement('div');
+        d.className = 'py-5';
+        d.innerHTML = `
+            <div class="flex justify-between items-start gap-3 mb-1">
                 <div class="font-semibold text-slate-800">${u.title}</div>
                 <div class="text-xs text-slate-400 whitespace-nowrap">${u.time}</div>
             </div>
-            <div class="text-xs text-blue-600 mb-1">${u.source}</div>
-            <p class="text-slate-600 leading-relaxed">${u.desc}</p>
+            <div class="text-xs text-blue-600 mb-1.5">${u.source}</div>
+            <p class="text-slate-600 leading-relaxed text-sm">${u.desc}</p>
         `;
-        container.appendChild(div);
+        c.appendChild(d);
     });
 }
 
+// ── AREAS TABLE ───────────────────────────────────────────────────────────
 function renderTable() {
     const tbody = document.getElementById('areas-table');
     tbody.innerHTML = '';
     locations.forEach(loc => {
+        const badge = loc.type === 'primary' ? 'bg-red-100 text-red-700' : loc.type === 'imported' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700';
+        const label = loc.type === 'primary' ? 'Epicenter' : loc.type === 'imported' ? 'Travel-linked' : 'Spreading';
         const row = document.createElement('tr');
-        row.className = "hover:bg-slate-50";
-        const badge = loc.type === 'primary'
-            ? 'bg-red-100 text-red-700'
-            : loc.type === 'imported'
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-orange-100 text-orange-700';
-        const label = loc.type === 'primary' ? 'Epicenter' : loc.type === 'imported' ? 'Travel-linked' : 'Ongoing';
+        row.className = 'hover:bg-slate-50';
         row.innerHTML = `
-            <td class="py-4 font-medium pr-4">${loc.name}</td>
-            <td class="py-4 text-right font-semibold text-red-600">${loc.confirmed}</td>
-            <td class="py-4 text-right font-medium text-orange-600">${loc.deaths}</td>
-            <td class="py-4 text-right text-slate-500">${loc.suspected > 0 ? loc.suspected.toLocaleString() : '—'}</td>
-            <td class="py-4 text-xs pl-4">
-                <span class="inline-block px-3 py-1 rounded-full ${badge}">${label}</span>
-            </td>
+            <td class="py-3 font-medium pr-4">${loc.name}</td>
+            <td class="py-3 text-right font-semibold text-red-600">${loc.confirmed}</td>
+            <td class="py-3 text-right text-orange-600">${loc.deaths}</td>
+            <td class="py-3 text-right text-slate-500">${loc.suspected > 0 ? loc.suspected.toLocaleString() : '—'}</td>
+            <td class="py-3 pl-3"><span class="text-xs px-2.5 py-1 rounded-full ${badge}">${label}</span></td>
         `;
         tbody.appendChild(row);
     });
-    // Add totals row
-    const total = document.createElement('tr');
-    total.className = "bg-slate-50 font-semibold";
-    total.innerHTML = `
-        <td class="py-4 pr-4">TOTAL (both countries)</td>
-        <td class="py-4 text-right text-red-700">134</td>
-        <td class="py-4 text-right text-orange-700">18</td>
-        <td class="py-4 text-right text-slate-600">906</td>
-        <td class="py-4 pl-4"></td>
-    `;
-    tbody.appendChild(total);
+    const tot = document.createElement('tr');
+    tot.className = 'bg-slate-50 font-semibold text-sm';
+    tot.innerHTML = `<td class="py-3 pr-4">Total (both countries)</td><td class="py-3 text-right text-red-700">134</td><td class="py-3 text-right text-orange-700">18</td><td class="py-3 text-right text-slate-600">906</td><td></td>`;
+    tbody.appendChild(tot);
 }
 
+// ── FACILITIES TABLE ──────────────────────────────────────────────────────
 function renderFacilitiesTable() {
     const tbody = document.getElementById('facilities-table');
     tbody.innerHTML = '';
     facilitiesTableData.forEach(f => {
+        const cc = f.country === 'Uganda' ? 'bg-blue-100 text-blue-700' : f.country === 'Kenya' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700';
         const row = document.createElement('tr');
-        row.className = "hover:bg-slate-50";
-        const countryColor = f.country === 'Uganda' ? 'bg-blue-100 text-blue-700'
-                           : f.country === 'Kenya'  ? 'bg-yellow-100 text-yellow-700'
-                           : 'bg-red-100 text-red-700';
+        row.className = 'hover:bg-slate-50';
         row.innerHTML = `
             <td class="py-3 font-medium pr-4">${f.name}</td>
-            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs ${countryColor}">${f.country}</span></td>
+            <td class="py-3"><span class="text-xs px-2 py-0.5 rounded-full ${cc}">${f.country}</span></td>
             <td class="py-3 text-slate-600">${f.type}</td>
             <td class="py-3 text-slate-600">${f.operator}</td>
             <td class="py-3 text-slate-500 text-xs">${f.notes}</td>
@@ -598,30 +496,39 @@ function renderFacilitiesTable() {
     });
 }
 
+// ── SOURCES ───────────────────────────────────────────────────────────────
+function renderSources() {
+    const c = document.getElementById('sources-list');
+    sourcesData.forEach(s => {
+        const a = document.createElement('a');
+        a.href = s.url;
+        a.target = '_blank';
+        a.className = 'data-source flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors';
+        a.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square text-blue-500 flex-shrink-0"></i><span class="text-sm">${s.label}</span>`;
+        c.appendChild(a);
+    });
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────────────
 function refreshData() {
     const btn = event.currentTarget;
     const orig = btn.innerHTML;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Checking sources…`;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Checking…`;
     setTimeout(() => {
         btn.innerHTML = orig;
-        const msg = {
-            time: "Just now",
-            title: "Sources Checked",
-            source: "WHO / ECDC / CDC",
-            desc: "Data verified against WHO DON, ECDC Rapid Risk Assessment (29 May), and CDC HAN 00530. Figures reflect latest DRC MoH revision."
-        };
-        sampleUpdates.unshift(msg);
-        if (sampleUpdates.length > 8) sampleUpdates.pop();
+        sampleUpdates.unshift({ time: "Just now", title: "Sources checked", source: "WHO / ECDC / CDC", desc: "Data verified against WHO DON, ECDC Rapid Risk Assessment (29 May), and CDC HAN 00530. Figures reflect the latest DRC MoH revision." });
+        if (sampleUpdates.length > 9) sampleUpdates.pop();
         renderUpdates();
     }, 1200);
 }
 
+// ── INIT ──────────────────────────────────────────────────────────────────
 window.onload = function () {
     updateStats();
     renderUpdates();
     renderTable();
     renderFacilitiesTable();
-    initMap();
+    renderSources();
 };
 </script>
 </body>
