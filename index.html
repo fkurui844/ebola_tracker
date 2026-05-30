@@ -14,7 +14,7 @@
   .leaflet-popup-content-wrapper{border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.12)}
   .leaflet-popup-content{font-size:13px;line-height:1.6}
   .quarantine-icon{background:none!important;border:none!important}
-  .tab-btn{transition:all .18s}
+  .tab-btn{transition:all .18s;white-space:nowrap}
   .tab-btn.active{background:#dc2626;color:#fff}
   .tab-btn:not(.active){color:#475569}
   .tab-btn:not(.active):hover{background:#f1f5f9}
@@ -52,7 +52,7 @@
   .settings-item{margin-bottom:16px}
   .settings-item label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#374151}
   .settings-item input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
-  .settings-item input:focus{outline:none;border-color:#15803d;ring:1px solid #15803d}
+  .settings-item input:focus{outline:none;border-color:#15803d}
   .settings-buttons{display:flex;gap:8px;margin-top:20px}
   .settings-buttons button{flex:1;padding:10px;border-radius:6px;border:none;font-weight:500;cursor:pointer;font-size:13px;transition:all .2s}
   .btn-save{background:#15803d;color:#fff}
@@ -62,10 +62,33 @@
   .refresh-indicator{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#15803d;font-weight:500}
   .refresh-indicator i{animation:spin 1s linear infinite}
   @keyframes spin{100%{transform:rotate(360deg)}}
-  .live-badge-header{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid rgba(220,38,38,.4);border-radius:20px;background:rgba(220,38,38,.05);font-size:12px;font-weight:600;letter-spacing:0.5px}
-  .live-dot{width:8px;height:8px;border-radius:50%;background:#dc2626;animation:pulse-live 1.5s ease-in-out infinite}
+  .live-badge-header{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid rgba(220,38,38,.4);border-radius:20px;background:rgba(220,38,38,.05);font-size:11px;font-weight:600;letter-spacing:0.5px}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#dc2626;animation:pulse-live 1.5s ease-in-out infinite;flex-shrink:0}
   @keyframes pulse-live{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}100%{transform:scale(1);opacity:1}}
   .live-text{color:#dc2626;text-transform:uppercase;letter-spacing:1px}
+
+  /* Tab scroll bar on mobile */
+  .tab-bar{display:flex;gap:1px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tab-bar::-webkit-scrollbar{display:none}
+
+  /* Scrollable tables on mobile */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-scroll table{min-width:520px}
+
+  /* Trend table needs more room */
+  .trend-scroll table{min-width:900px}
+
+  /* Leaflet layer control — keep usable on mobile */
+  .leaflet-control-layers{max-height:calc(100vh - 160px);overflow-y:auto}
+
+  @media(max-width:640px){
+    .stat-number{font-size:1.8rem}
+    #map{height:420px}
+    .p-6-mobile{padding:12px!important}
+    .leaflet-control-layers{font-size:12px}
+    /* Border crossing labels truncate gracefully */
+    .leaflet-div-icon div{max-width:130px;overflow:hidden;text-overflow:ellipsis}
+  }
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -73,40 +96,40 @@
 
 <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
 <header class="bg-white border-b sticky top-0 z-50 shadow-sm">
-  <div class="px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white text-2xl">
+  <div class="px-4 py-3 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
         <i class="fa-solid fa-virus-covid"></i>
       </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Ebola Outbreak Tracker</h1>
-        <p class="text-slate-500 text-xs">Bundibugyo Virus (BDBV) &nbsp;•&nbsp; Global Surveillance &nbsp;•&nbsp; 2026</p>
+      <div class="min-w-0">
+        <h1 class="text-base sm:text-2xl font-bold tracking-tight leading-tight truncate">Ebola Outbreak Tracker</h1>
+        <p class="text-slate-500 text-xs truncate">BDBV &nbsp;•&nbsp; Global Surveillance &nbsp;•&nbsp; 2026</p>
       </div>
     </div>
-    <div class="flex items-center gap-4 flex-wrap">
+    <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
       <div class="live-badge-header">
         <div class="live-dot"></div>
-        <span class="live-text">Live</span>
+        <span class="live-text text-xs">Live</span>
       </div>
-      <div class="flex items-center gap-2 text-red-600">
+      <div class="flex items-center gap-1.5 text-red-600">
         <div class="pulse-dot"></div>
-        <span class="font-semibold text-xs">PHEIC ACTIVE</span>
+        <span class="font-semibold text-xs hidden sm:inline">PHEIC ACTIVE</span>
+        <span class="font-semibold text-xs sm:hidden">PHEIC</span>
       </div>
-      <div id="last-fetch-time" class="text-xs text-slate-400">Auto-updating…</div>
-
+      <div id="last-fetch-time" class="text-xs text-slate-400 hidden sm:block">Auto-updating…</div>
     </div>
   </div>
-  <div class="px-6 flex gap-1 border-t bg-slate-50">
-    <button class="tab-btn active px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('overview',this)"><i class="fa-solid fa-chart-line mr-1.5"></i>Overview</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('map',this)"><i class="fa-solid fa-map-location-dot mr-1.5"></i>Map</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('updates',this)"><i class="fa-solid fa-bell mr-1.5"></i>Updates</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('facilities',this)"><i class="fa-solid fa-hospital mr-1.5"></i>Facilities</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('trends',this)"><i class="fa-solid fa-chart-line mr-1.5"></i>Trend Analysis</button>
-    <button class="tab-btn px-5 py-3 text-sm font-medium rounded-t-lg" onclick="switchTab('sources',this)"><i class="fa-solid fa-book mr-1.5"></i>Sources</button>
+  <div class="tab-bar border-t bg-slate-50 px-2">
+    <button class="tab-btn active px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('overview',this)"><i class="fa-solid fa-chart-line mr-1"></i>Overview</button>
+    <button class="tab-btn px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('map',this)"><i class="fa-solid fa-map-location-dot mr-1"></i>Map</button>
+    <button class="tab-btn px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('updates',this)"><i class="fa-solid fa-bell mr-1"></i>Updates</button>
+    <button class="tab-btn px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('facilities',this)"><i class="fa-solid fa-hospital mr-1"></i>Facilities</button>
+    <button class="tab-btn px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('trends',this)"><i class="fa-solid fa-chart-line mr-1"></i>Trends</button>
+    <button class="tab-btn px-3 py-2.5 text-xs font-medium rounded-t-lg flex-shrink-0" onclick="switchTab('sources',this)"><i class="fa-solid fa-book mr-1"></i>Sources</button>
   </div>
 </header>
 
-<div class="p-6">
+<div class="p-3 sm:p-6">
 <div id="fetch-banner" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex gap-3 items-start text-sm">
   <i class="fa-solid fa-circle-notch fa-spin text-blue-500 mt-0.5 flex-shrink-0"></i>
   <div>
@@ -123,40 +146,41 @@
 
 <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
 <div id="tab-overview" class="tab-panel active">
-  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-red-100 relative">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-red-100 relative">
       <p class="text-red-600 text-xs font-semibold tracking-wider mb-2">CONFIRMED CASES</p>
       <div id="stat-confirmed" class="stat-number text-red-600">134</div>
       <p id="stat-confirmed-sub" class="text-xs text-slate-400 mt-3">DRC 125 + Uganda 9</p>
     </div>
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-orange-100">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-orange-100">
       <p class="text-orange-600 text-xs font-semibold tracking-wider mb-2">CONFIRMED DEATHS</p>
       <div id="stat-deaths" class="stat-number text-orange-600">18</div>
       <p id="stat-cfr" class="text-xs text-slate-400 mt-3">CFR ≈ 13.4%</p>
     </div>
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
       <p class="text-slate-600 text-xs font-semibold tracking-wider mb-2">SUSPECTED CASES</p>
       <div id="stat-suspected" class="stat-number text-slate-700">906</div>
       <p id="stat-suspected-sub" class="text-xs text-slate-400 mt-3">incl. 223 suspected deaths</p>
     </div>
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-blue-100">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-blue-100">
       <p class="text-blue-600 text-xs font-semibold tracking-wider mb-2">COUNTRIES AFFECTED</p>
       <div id="stat-provinces" class="stat-number text-blue-600">12</div>
       <p class="text-xs text-slate-400 mt-3">Across Central & East Africa</p>
     </div>
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-green-100">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-green-100 col-span-2 sm:col-span-1">
       <p class="text-green-700 text-xs font-semibold tracking-wider mb-2">TREATMENT SITES</p>
       <div class="stat-number text-green-700">8+</div>
       <p class="text-xs text-slate-400 mt-3">Active ETCs / isolation units</p>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="bg-white rounded-2xl p-6 shadow-sm">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-semibold text-base">Affected areas — case breakdown</h2>
         <span id="table-freshness" class="text-xs text-slate-400">Baseline data</span>
       </div>
+      <div class="table-scroll">
       <table class="w-full text-sm">
         <thead><tr class="border-b text-left text-xs text-slate-400">
           <th class="pb-3 font-medium">Country / Region</th>
@@ -167,8 +191,9 @@
         </tr></thead>
         <tbody id="areas-table" class="divide-y"></tbody>
       </table>
+      </div>
     </div>
-    <div class="bg-white rounded-2xl p-6 shadow-sm">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <h2 class="font-semibold text-base mb-4">Key facts</h2>
       <ul id="key-facts" class="space-y-3 text-sm text-slate-700">
         <li class="flex gap-2.5"><span class="text-red-500 flex-shrink-0">•</span>No approved vaccine or specific antiviral for Bundibugyo virus</li>
@@ -183,14 +208,14 @@
 
 <!-- ══ MAP ════════════════════════════════════════════════════════════════ -->
 <div id="tab-map" class="tab-panel">
-  <div class="bg-white rounded-2xl p-6 shadow-sm">
+  <div class="bg-white rounded-2xl p-3 sm:p-6 shadow-sm">
     <h2 class="font-semibold text-base mb-4">Geographic distribution</h2>
     <div id="map-container">
       <div id="map"></div>
     </div>
     <div class="mt-6 border-t pt-4">
       <h3 class="text-sm font-semibold mb-3">Legend</h3>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="legend-row">
           <div style="width:20px;height:20px;border-radius:50%;background:rgba(220,38,38,0.18);border:2px solid #dc2626;flex-shrink:0;margin-top:2px"></div>
           <div>
@@ -219,7 +244,7 @@
             <p class="leg-desc">CAR, Comoros — no confirmed cases, precautionary</p>
           </div>
         </div>
-        <div class="legend-row col-span-2">
+        <div class="legend-row col-span-1 sm:col-span-2">
           <div style="background:#fff;border:2px solid #dc2626;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;color:#dc2626;flex-shrink:0;white-space:nowrap">🏥 ETC</div>
           <div>
             <p class="leg-title">Treatment Centres & Labs</p>
@@ -295,8 +320,8 @@
 <div id="tab-trends" class="tab-panel">
   <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
     <h2 class="font-semibold text-base mb-4">Historical comparison: Ebola outbreaks</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+    <div class="trend-scroll overflow-x-auto -webkit-overflow-scrolling-touch">
+      <table class="w-full text-sm" style="min-width:900px">
         <thead><tr class="border-b text-left text-xs text-slate-400">
           <th class="pb-3 font-medium">Outbreak</th>
           <th class="pb-3 text-right font-medium">Confirmed Cases</th>
@@ -312,15 +337,15 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="bg-white rounded-2xl p-6 shadow-sm">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <h2 class="font-semibold text-base mb-4">Case growth comparison</h2>
       <div id="chart-cases" class="text-slate-600 text-sm" style="height:250px;display:flex;align-items:center;justify-content:center">
         <p>Loading chart...</p>
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl p-6 shadow-sm">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <h2 class="font-semibold text-base mb-4">Case fatality rate (CFR) trends</h2>
       <div id="chart-cfr" class="text-slate-600 text-sm" style="height:250px;display:flex;align-items:center;justify-content:center">
         <p>Loading chart...</p>
@@ -328,7 +353,7 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
       <p class="text-blue-600 text-xs font-semibold mb-2">FASTEST GROWTH</p>
       <p class="text-2xl font-bold text-blue-700">2014-16 WEOB</p>
