@@ -174,6 +174,26 @@
     </div>
   </div>
 
+  <!-- ── COUNTRY SUMMARIES ─────────────────────────────────────────── -->
+  <div id="country-summaries" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5"></div>
+
+  <!-- ── INTERACTIVE CHARTS ────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm mb-5">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <h2 class="font-semibold text-base">Case breakdown — interactive charts</h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="setChartView('bar')" id="chart-btn-bar" style="padding:5px 12px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer">Bar</button>
+        <button onclick="setChartView('donut')" id="chart-btn-donut" style="padding:5px 12px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer">Donut</button>
+        <button onclick="setChartView('cfr')" id="chart-btn-cfr" style="padding:5px 12px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer">CFR</button>
+      </div>
+    </div>
+    <div id="chart-container" style="position:relative;width:100%;overflow:hidden">
+      <canvas id="main-chart" style="width:100%;max-height:320px"></canvas>
+    </div>
+    <p id="chart-caption" class="text-xs text-slate-400 mt-3 text-center"></p>
+  </div>
+
+  <!-- ── CASE BREAKDOWN TABLE ──────────────────────────────────────── -->
   <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm mb-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="font-semibold text-base">Affected areas — case breakdown</h2>
@@ -197,12 +217,13 @@
     </div>
   </div>
 
+  <!-- ── KEY FACTS ─────────────────────────────────────────────────── -->
   <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm mb-6">
     <h2 class="font-semibold text-base mb-3">Key facts</h2>
     <ul id="key-facts" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
       <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>No approved vaccine or specific antiviral for Bundibugyo virus</li>
       <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>WHO declared a Public Health Emergency of International Concern (PHEIC) on 17 May 2026</li>
-      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>Pan-global surveillance active across multiple continents; 8+ countries reporting cases or suspects</li>
+      <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>8+ countries on heightened surveillance; confirmed cases only in DRC and Uganda</li>
       <li class="flex gap-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>International coordination with WHO regional offices across Africa, Europe, and beyond</li>
       <li class="flex gap-2 sm:col-span-2"><span class="text-red-500 flex-shrink-0 mt-0.5">•</span>Contact tracing and isolation protocols coordinated through African CDC and WHO regional offices</li>
     </ul>
@@ -445,10 +466,13 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
 let map = null;
+let mainChart = null;
+let currentChartView = 'bar';
 let autoRefreshEnabled = false;
 let autoRefreshInterval = null;
 let countdownInterval = null;
@@ -516,6 +540,323 @@ function renderStats() {
   document.getElementById('stat-provinces').textContent = appData.stats.provinces || 2;
   const cfr = appData.stats.deaths && appData.stats.confirmed ? ((appData.stats.deaths / appData.stats.confirmed) * 100).toFixed(1) : 13.4;
   document.getElementById('stat-cfr').textContent = `CFR ≈ ${cfr}%`;
+}
+
+
+// ── COUNTRY SUMMARIES ────────────────────────────────────────────────────
+const countryMeta = {
+  'DRC': {
+    flag: '🇨🇩',
+    color: '#dc2626',
+    borderColor: '#fca5a5',
+    bg: '#fff7f7',
+    status: 'Active Outbreak',
+    statusColor: '#dc2626',
+    statusBg: '#fee2e2',
+    summary: 'Epicentre of the 2026 Bundibugyo outbreak. Cases confirmed across Ituri, North Kivu, and South Kivu provinces.',
+    response: 'WHO PHEIC declared 17 May 2026. ETCs operational in Bunia, Goma, and Bukavu. Contact tracing active.',
+    source: 'WHO DON-603',
+    link: 'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'
+  },
+  'Uganda': {
+    flag: '🇺🇬',
+    color: '#f97316',
+    borderColor: '#fed7aa',
+    bg: '#fffbf7',
+    status: 'Imported Cases',
+    statusColor: '#c2410c',
+    statusBg: '#ffedd5',
+    summary: '9 confirmed cases in Kampala, all linked to travel from DRC. Uganda closed its DRC border on 27 May 2026.',
+    response: 'UPDF Medical Centre treating patients. 21-day isolation mandated for DRC arrivals. Border closed.',
+    source: 'WHO / ECDC',
+    link: 'https://www.ecdc.europa.eu/en/ebola-virus-disease-outbreak-democratic-republic-congo-and-uganda'
+  },
+  'Kenya': {
+    flag: '🇰🇪',
+    color: '#0ea5e9',
+    borderColor: '#bae6fd',
+    bg: '#f0f9ff',
+    status: 'No Cases — High Surveillance',
+    statusColor: '#0369a1',
+    statusBg: '#e0f2fe',
+    summary: '0 confirmed cases. 9 persons tested — all negative. Kenya is classified high-risk by Africa CDC due to high cross-border movement with DRC/Uganda.',
+    response: 'Screening at all border points. 48,000+ people screened. 880+ health workers trained. Labs on standby.',
+    source: 'Africa CDC / Daily Nation',
+    link: 'https://africacdc.org/disease-outbreak/ebola-virus-disease/'
+  },
+  'Rwanda': {
+    flag: '🇷🇼',
+    color: '#8b5cf6',
+    borderColor: '#ddd6fe',
+    bg: '#faf5ff',
+    status: 'Monitoring',
+    statusColor: '#6d28d9',
+    statusBg: '#ede9fe',
+    summary: '0 confirmed cases. Mandatory quarantine introduced on 22 May for returning travellers from DRC.',
+    response: 'Rwanda Biomedical Centre reference lab active. Contact tracing for high-risk travellers ongoing.',
+    source: 'WHO / Wikipedia',
+    link: 'https://en.wikipedia.org/wiki/2026_Central_Africa_Ebola_epidemic'
+  },
+  'Tanzania': {
+    flag: '🇹🇿',
+    color: '#10b981',
+    borderColor: '#a7f3d0',
+    bg: '#f0fdf4',
+    status: 'Monitoring',
+    statusColor: '#065f46',
+    statusBg: '#d1fae5',
+    summary: '0 confirmed cases. Border checks tightened. Increased monitoring at airports and seaports.',
+    response: 'Tanzania Infectious Disease Institute on standby. Port health screening enhanced.',
+    source: 'WHO / Wikipedia',
+    link: 'https://en.wikipedia.org/wiki/2026_Central_Africa_Ebola_epidemic'
+  },
+  'Other': {
+    flag: '🌍',
+    color: '#64748b',
+    borderColor: '#cbd5e1',
+    bg: '#f8fafc',
+    status: 'Monitoring',
+    statusColor: '#475569',
+    statusBg: '#f1f5f9',
+    summary: 'CAR, Burundi, South Sudan, Angola, Ethiopia, Zambia classified as high-risk by Africa CDC. No confirmed cases in any.',
+    response: 'Enhanced surveillance and preparedness measures activated across all listed countries.',
+    source: 'Africa CDC',
+    link: 'https://africacdc.org/disease-outbreak/ebola-virus-disease/'
+  }
+};
+
+function renderCountrySummaries() {
+  const container = document.getElementById('country-summaries');
+  if (!container) return;
+
+  // Aggregate DRC from areas
+  const drcAreas = appData.areas.filter(a => a.location.includes('DRC'));
+  const drcConfirmed = drcAreas.reduce((s,a) => s + a.confirmed, 0);
+  const drcDeaths = drcAreas.reduce((s,a) => s + a.deaths, 0);
+  const drcSuspected = drcAreas.reduce((s,a) => s + a.suspected, 0);
+
+  const ugandaArea = appData.areas.find(a => a.location.includes('Uganda')) || {};
+
+  const countries = [
+    { key:'DRC', confirmed: drcConfirmed, deaths: drcDeaths, suspected: drcSuspected, provinces: drcAreas.map(a=>a.location.replace(' (DRC)','')).join(', ') },
+    { key:'Uganda', confirmed: ugandaArea.confirmed||9, deaths: ugandaArea.deaths||1, suspected: ugandaArea.suspected||0, provinces:'Kampala' },
+    { key:'Kenya', confirmed:0, deaths:0, suspected:0, provinces:'Under surveillance' },
+    { key:'Rwanda', confirmed:0, deaths:0, suspected:0, provinces:'Under surveillance' },
+    { key:'Tanzania', confirmed:0, deaths:0, suspected:0, provinces:'Under surveillance' },
+    { key:'Other', confirmed:0, deaths:0, suspected:0, provinces:'CAR, Burundi, South Sudan, Angola, Ethiopia, Zambia' },
+  ];
+
+  container.innerHTML = countries.map(c => {
+    const m = countryMeta[c.key];
+    const cfr = c.confirmed > 0 ? ((c.deaths/c.confirmed)*100).toFixed(1)+'%' : 'N/A';
+    return `
+    <div style="background:${m.bg};border:1px solid ${m.borderColor};border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:between;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <span style="font-size:24px;flex-shrink:0">${m.flag}</span>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:14px;color:#1e293b">${c.key}</div>
+            <div style="font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.provinces}</div>
+          </div>
+        </div>
+        <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:${m.statusBg};color:${m.statusColor};white-space:nowrap;flex-shrink:0">${m.status}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+        <div style="background:white;border-radius:8px;padding:8px 4px">
+          <div style="font-size:18px;font-weight:700;color:${m.color}">${c.confirmed}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:1px">Confirmed</div>
+        </div>
+        <div style="background:white;border-radius:8px;padding:8px 4px">
+          <div style="font-size:18px;font-weight:700;color:#f97316">${c.deaths}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:1px">Deaths</div>
+        </div>
+        <div style="background:white;border-radius:8px;padding:8px 4px">
+          <div style="font-size:18px;font-weight:700;color:#64748b">${c.suspected||'—'}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:1px">Suspected</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:#475569;line-height:1.5;margin:0">${m.summary}</p>
+      <div style="background:white;border-radius:8px;padding:8px 10px;font-size:11px;color:#374151;border-left:3px solid ${m.color}">
+        <strong style="color:${m.color};display:block;margin-bottom:2px">Response</strong>
+        ${m.response}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10px;color:#94a3b8">CFR: ${cfr} &nbsp;•&nbsp; Source: ${m.source}</span>
+        <a href="${m.link}" target="_blank" style="font-size:11px;color:${m.color};text-decoration:none;font-weight:600" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">View source ↗</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INTERACTIVE CHARTS ────────────────────────────────────────────────────
+function setChartView(view) {
+  currentChartView = view;
+  ['bar','donut','cfr'].forEach(v => {
+    const btn = document.getElementById('chart-btn-'+v);
+    if (v === view) {
+      btn.style.background = '#dc2626';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#dc2626';
+    } else {
+      btn.style.background = '#fff';
+      btn.style.color = '#475569';
+      btn.style.borderColor = '#e2e8f0';
+    }
+  });
+  renderCharts();
+}
+
+function renderCharts() {
+  const canvas = document.getElementById('main-chart');
+  const caption = document.getElementById('chart-caption');
+  if (!canvas) return;
+
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+  // Only areas with data
+  const active = appData.areas.filter(a => a.confirmed > 0 || a.suspected > 0);
+  const labels = active.map(a => a.location.replace(' (DRC)','').replace(' (Uganda)',''));
+
+  if (currentChartView === 'bar') {
+    caption.textContent = 'Confirmed vs. suspected cases by region — source: WHO DON-603 / ECDC (29 May 2026)';
+    mainChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Confirmed',
+            data: active.map(a => a.confirmed),
+            backgroundColor: 'rgba(220,38,38,0.85)',
+            borderRadius: 4,
+            borderSkipped: false,
+          },
+          {
+            label: 'Deaths',
+            data: active.map(a => a.deaths),
+            backgroundColor: 'rgba(249,115,22,0.85)',
+            borderRadius: 4,
+            borderSkipped: false,
+          },
+          {
+            label: 'Suspected',
+            data: active.map(a => a.suspected),
+            backgroundColor: 'rgba(148,163,184,0.5)',
+            borderRadius: 4,
+            borderSkipped: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
+          tooltip: {
+            callbacks: {
+              afterBody: (items) => {
+                const idx = items[0].dataIndex;
+                const cfr = active[idx].confirmed > 0
+                  ? ((active[idx].deaths / active[idx].confirmed)*100).toFixed(1) + '% CFR'
+                  : '';
+                return cfr ? [cfr] : [];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+
+  } else if (currentChartView === 'donut') {
+    const drcTotal = appData.areas.filter(a=>a.location.includes('DRC')).reduce((s,a)=>s+a.confirmed,0);
+    const ugTotal = appData.areas.filter(a=>a.location.includes('Uganda')).reduce((s,a)=>s+a.confirmed,0);
+    const donutLabels = ['Ituri (DRC)','North Kivu (DRC)','South Kivu (DRC)','Uganda'];
+    const donutData = appData.areas.filter(a=>a.confirmed>0).map(a=>a.confirmed);
+    const donutAreaLabels = appData.areas.filter(a=>a.confirmed>0).map(a=>a.location.replace(' (DRC)','').replace('(Uganda)','Uganda'));
+    const colors = ['#dc2626','#ef4444','#f87171','#f97316'];
+    caption.textContent = 'Share of confirmed cases by region — DRC accounts for the majority';
+    mainChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: donutAreaLabels,
+        datasets: [{
+          data: donutData,
+          backgroundColor: colors,
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 14 } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = ((ctx.parsed/total)*100).toFixed(1);
+                return ` ${ctx.label}: ${ctx.parsed} cases (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+  } else if (currentChartView === 'cfr') {
+    const cfrAreas = appData.areas.filter(a => a.confirmed > 0);
+    const cfrLabels = cfrAreas.map(a => a.location.replace(' (DRC)','').replace('(Uganda)','Uganda'));
+    const cfrValues = cfrAreas.map(a => parseFloat(((a.deaths/a.confirmed)*100).toFixed(1)));
+    caption.textContent = 'Case fatality rate (%) by region — higher CFR in epicentre zones reflects healthcare access challenges';
+    mainChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: cfrLabels,
+        datasets: [{
+          label: 'CFR (%)',
+          data: cfrValues,
+          backgroundColor: cfrValues.map(v => v > 15 ? 'rgba(220,38,38,0.85)' : v > 8 ? 'rgba(249,115,22,0.8)' : 'rgba(251,191,36,0.8)'),
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` CFR: ${ctx.parsed.y}%`,
+              afterLabel: (ctx) => {
+                const a = cfrAreas[ctx.dataIndex];
+                return ` (${a.deaths} deaths / ${a.confirmed} confirmed)`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: {
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { size: 11 }, callback: v => v + '%' },
+            title: { display: true, text: 'Case Fatality Rate (%)', font: { size: 11 }, color: '#94a3b8' }
+          }
+        }
+      }
+    });
+  }
 }
 
 function renderTable() {
@@ -886,6 +1227,8 @@ Track all nations worldwide. Search for the latest from WHO, ECDC, CDC, and Afri
       document.getElementById('last-fetch-time').textContent = `Last updated ${fetchTime}`;
 
       renderStats();
+      renderCountrySummaries();
+      renderCharts();
       renderTable();
       renderUpdates();
       if (map) { map.remove(); map = null; initMap(); }
@@ -999,6 +1342,8 @@ function saveSettings() {
 
 window.onload = function() {
   renderStats();
+  renderCountrySummaries();
+  renderCharts();
   renderTable();
   renderUpdates();
   renderFacilities();
