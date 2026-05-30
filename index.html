@@ -73,7 +73,7 @@
 
   /* Scrollable tables on mobile */
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .table-scroll table{min-width:520px}
+  .table-scroll table{min-width:720px}
 
   /* Trend table needs more room */
   .trend-scroll table{min-width:900px}
@@ -188,6 +188,8 @@
           <th class="pb-3 text-right font-medium">Deaths</th>
           <th class="pb-3 text-right font-medium">Suspected</th>
           <th class="pb-3 pl-3 font-medium">Status</th>
+          <th class="pb-3 pl-3 font-medium">Source</th>
+          <th class="pb-3 pl-3 font-medium">Read More</th>
         </tr></thead>
         <tbody id="areas-table" class="divide-y"></tbody>
       </table>
@@ -453,18 +455,18 @@ let nextRefreshTime = null;
 let autoRefreshMinutes = 5;
 
 const areasData = [
-  {location:'Ituri (DRC)',confirmed:67,deaths:12,suspected:520,status:'High risk'},
-  {location:'North Kivu (DRC)',confirmed:42,deaths:5,suspected:250,status:'High risk'},
-  {location:'South Kivu (DRC)',confirmed:16,deaths:1,suspected:90,status:'Moderate'},
-  {location:'Kampala (Uganda)',confirmed:9,deaths:0,suspected:46,status:'Moderate'},
-  {location:'Western Region (Kenya)',confirmed:3,deaths:0,suspected:12,status:'Monitoring'},
-  {location:'Eastern Province (Rwanda)',confirmed:2,deaths:0,suspected:8,status:'Monitoring'},
-  {location:'Nord-Kivu Border (CAR)',confirmed:1,deaths:0,suspected:5,status:'Monitoring'},
-  {location:'Kasai Region (DRC)',confirmed:0,deaths:0,suspected:18,status:'Monitoring'},
-  {location:'Maniema (DRC)',confirmed:0,deaths:0,suspected:14,status:'Monitoring'},
-  {location:'Kinshasa (DRC)',confirmed:0,deaths:0,suspected:22,status:'Monitoring'},
-  {location:'Dar es Salaam (Tanzania)',confirmed:0,deaths:0,suspected:3,status:'Alert'},
-  {location:'Bukoba (Tanzania)',confirmed:0,deaths:0,suspected:7,status:'Alert'},
+  {location:'Ituri (DRC)',confirmed:67,deaths:12,suspected:520,status:'High risk',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
+  {location:'North Kivu (DRC)',confirmed:42,deaths:5,suspected:250,status:'High risk',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
+  {location:'South Kivu (DRC)',confirmed:16,deaths:1,suspected:90,status:'Moderate',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'Kampala (Uganda)',confirmed:9,deaths:0,suspected:46,status:'Moderate',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON603'},
+  {location:'Western Region (Kenya)',confirmed:3,deaths:0,suspected:12,status:'Monitoring',source:'Kenya MoH',link:'https://www.health.go.ke/'},
+  {location:'Eastern Province (Rwanda)',confirmed:2,deaths:0,suspected:8,status:'Monitoring',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
+  {location:'Nord-Kivu Border (CAR)',confirmed:1,deaths:0,suspected:5,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'Kasai Region (DRC)',confirmed:0,deaths:0,suspected:18,status:'Monitoring',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
+  {location:'Maniema (DRC)',confirmed:0,deaths:0,suspected:14,status:'Monitoring',source:'WHO DON',link:'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON602'},
+  {location:'Kinshasa (DRC)',confirmed:0,deaths:0,suspected:22,status:'Monitoring',source:'Africa CDC',link:'https://africacdc.org/disease-outbreak/ebola-virus-disease/'},
+  {location:'Dar es Salaam (Tanzania)',confirmed:0,deaths:0,suspected:3,status:'Alert',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
+  {location:'Bukoba (Tanzania)',confirmed:0,deaths:0,suspected:7,status:'Alert',source:'ECDC',link:'https://www.ecdc.europa.eu/en/ebola-and-marburg-fevers/threats-and-outbreaks'},
 ];
 
 const updatesData = [
@@ -522,12 +524,16 @@ function renderTable() {
   tbody.innerHTML = '';
   appData.areas.forEach(area => {
     const tr = document.createElement('tr');
+    const sourceLabel = area.source || '—';
+    const sourceLink = area.link || '#';
     tr.innerHTML = `
       <td class="py-3">${area.location}</td>
       <td class="py-3 text-right font-semibold">${area.confirmed}</td>
       <td class="py-3 text-right text-orange-600 font-semibold">${area.deaths}</td>
       <td class="py-3 text-right text-slate-600">${area.suspected}</td>
       <td class="py-3 pl-3"><span class="text-xs px-2 py-1 rounded ${area.status.includes('High')?'bg-red-100 text-red-700':area.status.includes('Moderate')?'bg-orange-100 text-orange-700':'bg-blue-100 text-blue-700'}">${area.status}</span></td>
+      <td class="py-3 pl-3 text-xs text-slate-500 whitespace-nowrap">${sourceLabel}</td>
+      <td class="py-3 pl-3"><a href="${sourceLink}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px"></i> View</a></td>
     `;
     tbody.appendChild(tr);
   });
@@ -852,7 +858,12 @@ Track all nations worldwide. Search for the latest from WHO, ECDC, CDC, and Afri
     const parsed = JSON.parse(jsonStr);
 
     if (parsed.stats && parsed.areas) {
-      appData = {stats:parsed.stats,areas:parsed.areas,updates:parsed.updates||updatesData,facilities:facilitiesData,sources:sourcesData,mapMarkers:appData.mapMarkers};
+      // Merge source/link from baseline areasData into live-fetched areas
+      const mergedAreas = parsed.areas.map(a => {
+        const baseline = areasData.find(b => b.location === a.location) || {};
+        return {...a, source: baseline.source || 'WHO', link: baseline.link || 'https://www.who.int/emergencies/disease-outbreak-news'};
+      });
+      appData = {stats:parsed.stats,areas:mergedAreas,updates:parsed.updates||updatesData,facilities:facilitiesData,sources:sourcesData,mapMarkers:appData.mapMarkers};
       
       const fetchTime = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
       document.getElementById('last-fetch-time').textContent = `Last updated ${fetchTime}`;
